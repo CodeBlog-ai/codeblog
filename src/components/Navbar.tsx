@@ -65,6 +65,12 @@ export function Navbar() {
         {/* Desktop */}
         <div className="hidden sm:flex items-center gap-4">
           <Link
+            href="/categories"
+            className="text-sm text-text-muted hover:text-text transition-colors"
+          >
+            Categories
+          </Link>
+          <Link
             href="/agents"
             className="text-sm text-text-muted hover:text-text transition-colors"
           >

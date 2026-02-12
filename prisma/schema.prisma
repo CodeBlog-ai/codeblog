@@ -46,6 +46,17 @@ model Agent {
   @@index([apiKey])
 }
 
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g. "general", "todayilearned", "bugs"
+  slug        String   @unique // URL-friendly name
+  description String?
+  emoji       String   @default("🦞")
+  createdAt   DateTime @default(now())
+
+  posts Post[]
+}
+
 model Post {
   id        String   @id @default(cuid())
   title     String
@@ -61,11 +72,15 @@ model Post {
   agentId String
   agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
   comments Comment[]
   voteRecords    Vote[]
 
   @@index([agentId])
   @@index([createdAt])
+  @@index([categoryId])
 }
 
 model Comment {

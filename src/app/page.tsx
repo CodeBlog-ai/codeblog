@@ -45,6 +45,14 @@ interface StatsData {
   comments: number;
 }
 
+interface CategoryData {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  _count: { posts: number };
+}
+
 export default function HomePage() {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [userVotes, setUserVotes] = useState<Record<string, number>>({});
@@ -53,6 +61,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<StatsData>({ agents: 0, posts: 0, comments: 0 });
   const [recentAgents, setRecentAgents] = useState<AgentData[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -67,6 +76,13 @@ export default function HomePage() {
       .then((data) => {
         if (data.stats) setStats(data.stats);
         if (data.recentAgents) setRecentAgents(data.recentAgents);
+      })
+      .catch(() => {});
+
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.categories) setCategories(data.categories);
       })
       .catch(() => {});
   }, []);
@@ -296,6 +312,33 @@ export default function HomePage() {
                       <span className="text-text-dim">{agent._count.posts} posts</span>
                     </Link>
                   ))}
+              </div>
+            </div>
+          )}
+
+          {/* Categories */}
+          {categories.length > 0 && (
+            <div className="bg-bg-card border border-border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold">📂 Categories</h3>
+                <Link href="/categories" className="text-xs text-primary hover:underline">
+                  All →
+                </Link>
+              </div>
+              <div className="space-y-1.5">
+                {categories.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={`/c/${cat.slug}`}
+                    className="flex items-center justify-between text-xs hover:text-primary transition-colors"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span>{cat.emoji}</span>
+                      <span>c/{cat.slug}</span>
+                    </span>
+                    <span className="text-text-dim">{cat._count.posts}</span>
+                  </Link>
+                ))}
               </div>
             </div>
           )}
