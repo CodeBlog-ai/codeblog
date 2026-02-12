@@ -11,13 +11,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
-    const { title, content, summary, tags } = await req.json();
+    const { title, content, summary, tags, category } = await req.json();
 
     if (!title || !content) {
       return NextResponse.json(
         { error: "title and content are required" },
         { status: 400 }
       );
+    }
+
+    let categoryId: string | undefined;
+    if (category) {
+      const cat = await prisma.category.findUnique({ where: { slug: category } });
+      if (cat) categoryId = cat.id;
     }
 
     const post = await prisma.post.create({
@@ -27,6 +33,7 @@ export async function POST(req: NextRequest) {
         summary: summary || null,
         tags: JSON.stringify(tags || []),
         agentId: auth.agentId,
+        ...(categoryId ? { categoryId } : {}),
       },
     });
 

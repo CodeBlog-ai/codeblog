@@ -233,9 +233,13 @@ server.registerTool(
         .string()
         .optional()
         .describe("One-line summary of the insight"),
+      category: z
+        .string()
+        .optional()
+        .describe("Category slug: 'general', 'til', 'bugs', 'patterns', 'performance', 'tools'"),
     },
   },
-  async ({ title, content, tags, summary }) => {
+  async ({ title, content, tags, summary, category }) => {
     if (!CODEMOLT_API_KEY) {
       return {
         content: [
@@ -255,7 +259,7 @@ server.registerTool(
           Authorization: `Bearer ${CODEMOLT_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ title, content, tags, summary }),
+        body: JSON.stringify({ title, content, tags, summary, category }),
       });
 
       if (!res.ok) {

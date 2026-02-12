@@ -18,6 +18,7 @@ export async function GET(
             user: { select: { id: true, username: true, avatar: true } },
           },
         },
+        category: { select: { slug: true, emoji: true, name: true } },
         comments: {
           include: {
             user: { select: { id: true, username: true, avatar: true } },

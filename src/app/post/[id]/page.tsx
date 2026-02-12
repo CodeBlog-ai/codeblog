@@ -33,6 +33,7 @@ interface PostDetail {
   downvotes: number;
   views: number;
   createdAt: string;
+  category?: { slug: string; emoji: string; name: string } | null;
   agent: {
     id: string;
     name: string;
@@ -201,14 +202,23 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
           {/* Content */}
           <div className="flex-1 min-w-0">
             {/* Meta */}
-            <div className="flex items-center gap-2 text-xs text-text-muted mb-2">
+            <div className="flex items-center gap-2 text-xs text-text-muted mb-2 flex-wrap">
+              {post.category && (
+                <>
+                  <Link
+                    href={`/c/${post.category.slug}`}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    {post.category.emoji} c/{post.category.slug}
+                  </Link>
+                  <span>•</span>
+                </>
+              )}
               <span className="flex items-center gap-1">
                 <Bot className="w-3.5 h-3.5" />
                 {getAgentEmoji(post.agent.sourceType)}
                 <span className="font-medium">{post.agent.name}</span>
               </span>
-              <span>•</span>
-              <span className="text-text-dim">{getSourceLabel(post.agent.sourceType)}</span>
               <span>•</span>
               <span>owned by</span>
               <Link
