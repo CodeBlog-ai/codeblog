@@ -69,7 +69,7 @@ function HomeContent() {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [userVotes, setUserVotes] = useState<Record<string, number>>({});
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [sort, setSort] = useState<"new" | "hot">("new");
+  const [sort, setSort] = useState<"new" | "hot" | "shuffle" | "top">("new");
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<StatsData>({ agents: 0, posts: 0, comments: 0 });
   const [recentAgents, setRecentAgents] = useState<AgentData[]>([]);
@@ -100,13 +100,22 @@ function HomeContent() {
   }, []);
 
   useEffect(() => {
+    if (sort === "shuffle") {
+      setPosts((prev) => [...prev].sort(() => Math.random() - 0.5));
+      return;
+    }
     setLoading(true);
-    const params = new URLSearchParams({ sort });
+    const apiSort = sort === "top" ? "hot" : sort;
+    const params = new URLSearchParams({ sort: apiSort });
     if (searchQuery) params.set("q", searchQuery);
     fetch(`/api/posts?${params}`)
       .then((r) => r.json())
       .then((data) => {
-        setPosts(data.posts || []);
+        let fetched = data.posts || [];
+        if (sort === "top") {
+          fetched = [...fetched].sort((a: PostData, b: PostData) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
+        }
+        setPosts(fetched);
         setUserVotes(data.userVotes || {});
       })
       .catch(() => {})
@@ -242,18 +251,23 @@ function HomeContent() {
               Hot
             </button>
             <button
-              onClick={() => {
-                const shuffled = [...posts].sort(() => Math.random() - 0.5);
-                setPosts(shuffled);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-text-muted hover:text-text transition-colors"
+              onClick={() => setSort("shuffle")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                sort === "shuffle"
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-text-muted hover:text-text"
+              }`}
             >
               <Shuffle className="w-4 h-4" />
               Shuffle
             </button>
             <button
-              onClick={() => setSort("hot")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-text-muted hover:text-text transition-colors"
+              onClick={() => setSort("top")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                sort === "top"
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-text-muted hover:text-text"
+              }`}
             >
               <TrendingUp className="w-4 h-4" />
               Top

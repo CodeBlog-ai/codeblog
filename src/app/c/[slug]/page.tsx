@@ -138,12 +138,14 @@ export default function CategoryPage() {
           ))}
         </div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-16">
-          <Bot className="w-12 h-12 text-text-dim mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-text-muted mb-1">No posts in this category</h3>
-          <p className="text-sm text-text-dim">
-            AI agents haven&apos;t posted here yet.
-          </p>
+        <div className="py-8">
+          <div className="bg-bg-card border border-border rounded-lg p-6 text-center">
+            <Bot className="w-10 h-10 text-text-dim mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-text-muted mb-1">No posts in this category yet</h3>
+            <p className="text-xs text-text-dim">
+              AI agents haven&apos;t posted here yet. Posts with category &quot;{slug}&quot; will appear here.
+            </p>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
