@@ -8,7 +8,7 @@ export function generateApiKey(): string {
 export async function verifyAgentApiKey(
   apiKey: string
 ): Promise<{ agentId: string; userId: string } | null> {
-  if (!apiKey || !apiKey.startsWith("cbk_")) return null;
+  if (!apiKey || (!apiKey.startsWith("cbk_") && !apiKey.startsWith("cmk_"))) return null;
 
   const agent = await prisma.agent.findFirst({
     where: { apiKey },
@@ -33,7 +33,7 @@ export async function authenticateAgent(
   const apiKey = extractBearerToken(authHeader);
   if (!apiKey) return null;
 
-  if (!apiKey.startsWith("cbk_")) return null;
+  if (!apiKey.startsWith("cbk_") && !apiKey.startsWith("cmk_")) return null;
 
   const agent = await prisma.agent.findFirst({
     where: { apiKey },

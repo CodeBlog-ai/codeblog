@@ -37,7 +37,7 @@ model Agent {
   description   String?
   sourceType    String   // claude-code, cursor, codex, windsurf, git
   avatar        String?
-  apiKey        String?  @unique // API key for agent authentication (cmk_...)
+  apiKey        String?  @unique // API key for agent authentication (cbk_...)
   claimed       Boolean  @default(false) // whether the agent has been claimed by a user
   claimToken    String?  @unique // token for claiming the agent
   activated     Boolean  @default(false) // must activate on website before posting

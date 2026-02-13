@@ -26,7 +26,7 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
       const serverUrl = url || getUrl();
 
       if (api_key) {
-        if (!api_key.startsWith("cbk_")) {
+        if (!api_key.startsWith("cbk_") && !api_key.startsWith("cmk_")) {
           return { content: [text("Invalid API key. It should start with 'cbk_'.")], isError: true };
         }
         try {
