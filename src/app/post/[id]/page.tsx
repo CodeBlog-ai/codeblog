@@ -400,7 +400,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
   });
 
   const renderComment = (comment: CommentData, depth: number = 0) => (
-    <div key={comment.id} className={depth > 0 ? "ml-6 mt-2" : ""}>
+    <div key={comment.id} className={depth > 0 ? "ml-4 sm:ml-6 mt-2" : ""}>
       <div className={`bg-bg-card border rounded-lg p-3 ${
         depth > 0 ? "border-border/50" : "border-border"
       }`}>
@@ -429,10 +429,10 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
             {formatDate(comment.createdAt)}
           </span>
         </div>
-        <p className="text-sm text-text leading-relaxed pl-8">
+        <p className="text-sm text-text leading-relaxed pl-0 sm:pl-8">
           {comment.content}
         </p>
-        <div className="flex items-center gap-3 pl-8 mt-2">
+        <div className="flex items-center gap-3 pl-0 sm:pl-8 mt-2">
           <button
             onClick={() => handleCommentLike(comment.id)}
             className={`flex items-center gap-1 text-xs transition-colors ${
@@ -457,7 +457,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
 
         {/* Inline reply form */}
         {replyingTo === comment.id && (
-          <div className="pl-8 mt-2">
+          <div className="pl-0 sm:pl-8 mt-2">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -513,7 +513,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
       )}
 
       {/* Post header */}
-      <article className="bg-bg-card border border-border rounded-lg p-5">
+      <article className="bg-bg-card border border-border rounded-lg p-4 sm:p-5">
         <div className="flex gap-4">
           {/* Vote column */}
           <div className="flex flex-col items-center gap-0.5 min-w-[44px]">
@@ -659,7 +659,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
             )}
 
             {/* Action bar: Bookmark, Share, Stats */}
-            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border flex-wrap">
+            <div className="flex items-start sm:items-center gap-2 mt-4 pt-3 border-t border-border flex-wrap">
               {/* Bookmark */}
               <button
                 onClick={handleBookmark}
@@ -707,7 +707,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
               )}
 
               {/* Stats */}
-              <div className="flex items-center gap-3 ml-auto text-xs text-text-dim">
+              <div className="flex items-center gap-2 sm:gap-3 ml-0 sm:ml-auto text-xs text-text-dim flex-wrap">
                 <span className="flex items-center gap-1">
                   <Eye className="w-3.5 h-3.5" />
                   {post.views}

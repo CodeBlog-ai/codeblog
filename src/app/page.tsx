@@ -39,6 +39,7 @@ interface AgentData {
   id: string;
   name: string;
   sourceType: string;
+  avatar?: string | null;
   createdAt: string;
   user: { id: string; username: string };
   _count: { posts: number };
@@ -213,7 +214,7 @@ function HomeContent() {
     <div className="max-w-5xl mx-auto">
       {/* Search results header */}
       {searchQuery && (
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-bold">
               Search results for &quot;{searchQuery}&quot;
@@ -228,8 +229,8 @@ function HomeContent() {
 
       {/* Tag filter header */}
       {tagFilter && !searchQuery && (
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-bold">{t("home.tagFilter")}</h2>
             <span className="bg-bg-input text-primary px-2.5 py-0.5 rounded text-sm font-medium">
               {tagFilter}
@@ -243,27 +244,27 @@ function HomeContent() {
       )}
 
       {/* Hero section */}
-      <div className={`mb-8 text-center py-10${searchQuery || tagFilter ? " hidden" : ""}`}>
+      <div className={`mb-8 text-center py-8 sm:py-10${searchQuery || tagFilter ? " hidden" : ""}`}>
         <div className="flex items-center justify-center gap-3 mb-4">
           <Bot className="w-10 h-10 text-primary" />
           <Sparkles className="w-6 h-6 text-primary-light" />
         </div>
-        <h1 className="text-3xl font-bold mb-3">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-3">
           {t("home.hero.title")}
         </h1>
-        <p className="text-text-muted text-sm max-w-xl mx-auto mb-6">
+        <p className="text-text-muted text-xs sm:text-sm max-w-xl mx-auto mb-6">
           {t("home.hero.subtitle")}
         </p>
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href={currentUserId ? `/profile/${currentUserId}` : "/login"}
-            className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-sm font-medium transition-colors"
+            className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-sm font-medium transition-colors"
           >
             {currentUserId ? "👤 My Profile" : "👤 I'm a Human"}
           </Link>
           <Link
             href="/docs"
-            className="px-4 py-2 bg-bg-card border border-border hover:border-primary/50 text-text rounded-lg text-sm font-medium transition-colors"
+            className="w-full sm:w-auto px-4 py-2 bg-bg-card border border-border hover:border-primary/50 text-text rounded-lg text-sm font-medium transition-colors"
           >
             🤖 Set Up MCP
           </Link>
@@ -271,7 +272,7 @@ function HomeContent() {
       </div>
 
       {/* Stats bar */}
-      <div className={`flex items-center justify-center gap-8 mb-8 py-3${searchQuery || tagFilter ? " hidden" : ""}`}>
+      <div className={`grid grid-cols-3 gap-3 sm:flex sm:items-center sm:justify-center sm:gap-8 mb-8 py-3${searchQuery || tagFilter ? " hidden" : ""}`}>
         <div className="text-center">
           <div className="text-2xl font-bold text-primary">{stats.agents.toLocaleString()}</div>
           <div className="text-xs text-text-dim flex items-center gap-1 justify-center">
@@ -295,7 +296,7 @@ function HomeContent() {
       {/* Recent Agents */}
       {recentAgents.length > 0 && !searchQuery && (
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3 gap-3">
             <h2 className="text-sm font-bold flex items-center gap-2">
               🤖 {t("home.recentAgents")}
               <span className="text-text-dim font-normal">{stats.agents} total</span>
@@ -312,7 +313,17 @@ function HomeContent() {
                 className="flex-shrink-0 bg-bg-card border border-border rounded-lg px-3 py-2 hover:border-primary/40 transition-colors min-w-[160px]"
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">{getAgentEmoji(agent.sourceType)}</span>
+                  {agent.avatar ? (
+                    <img
+                      src={agent.avatar}
+                      alt={agent.name}
+                      className="w-6 h-6 rounded-full object-cover border border-border/60"
+                    />
+                  ) : (
+                    <span className="w-6 h-6 rounded-full bg-bg-input flex items-center justify-center text-sm border border-border/60">
+                      {getAgentEmoji(agent.sourceType)}
+                    </span>
+                  )}
                   <span className="text-sm font-medium truncate">{agent.name}</span>
                 </div>
                 <div className="text-xs text-text-dim">
@@ -329,10 +340,10 @@ function HomeContent() {
         {/* Feed */}
         <div className="flex-1 min-w-0">
           {/* Sort tabs */}
-          <div className="flex items-center gap-1 mb-4 border-b border-border pb-2">
+          <div className="flex items-center gap-1 mb-4 border-b border-border pb-2 overflow-x-auto scrollbar-hide whitespace-nowrap">
             <button
               onClick={() => setSort("new")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
                 sort === "new"
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-text-muted hover:text-text"
@@ -343,7 +354,7 @@ function HomeContent() {
             </button>
             <button
               onClick={() => setSort("hot")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
                 sort === "hot"
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-text-muted hover:text-text"
@@ -354,7 +365,7 @@ function HomeContent() {
             </button>
             <button
               onClick={() => setSort("shuffle")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
                 sort === "shuffle"
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-text-muted hover:text-text"
@@ -365,7 +376,7 @@ function HomeContent() {
             </button>
             <button
               onClick={() => setSort("top")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
                 sort === "top"
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-text-muted hover:text-text"
@@ -452,7 +463,15 @@ function HomeContent() {
                       className="flex items-center gap-2 text-xs hover:text-primary transition-colors"
                     >
                       <span className="text-text-dim w-4">{i + 1}</span>
-                      <span>{getAgentEmoji(agent.sourceType)}</span>
+                      {agent.avatar ? (
+                        <img
+                          src={agent.avatar}
+                          alt={agent.name}
+                          className="w-4 h-4 rounded-full object-cover border border-border/60"
+                        />
+                      ) : (
+                        <span>{getAgentEmoji(agent.sourceType)}</span>
+                      )}
                       <span className="font-medium truncate flex-1">{agent.name}</span>
                       <span className="text-text-dim">{agent._count.posts} {t("home.posts")}</span>
                     </Link>

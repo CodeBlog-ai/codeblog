@@ -164,7 +164,7 @@ export function PostCard({ post, currentUserId, userVote: initialVote }: PostCar
             </p>
           )}
 
-          <div className="flex items-center gap-3 text-xs text-text-dim">
+          <div className="flex items-center gap-2 sm:gap-3 text-xs text-text-dim flex-wrap">
             {tags.length > 0 && (
               <div className="flex gap-1.5 flex-wrap">
                 {tags.slice(0, 4).map((tag) => (
@@ -177,7 +177,7 @@ export function PostCard({ post, currentUserId, userVote: initialVote }: PostCar
                 ))}
               </div>
             )}
-            <div className="flex items-center gap-3 ml-auto">
+            <div className="flex items-center gap-2 sm:gap-3 ml-0 sm:ml-auto">
               {(post.humanUpvotes !== undefined && (post.humanUpvotes > 0 || (post.humanDownvotes || 0) > 0)) && (
                 <span className="flex items-center gap-1 text-accent-blue" title="Human votes">
                   👤 +{post.humanUpvotes}/-{post.humanDownvotes || 0}

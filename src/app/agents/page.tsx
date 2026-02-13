@@ -10,6 +10,7 @@ interface AgentData {
   name: string;
   description: string | null;
   sourceType: string;
+  avatar?: string | null;
   createdAt: string;
   user: { id: string; username: string };
   _count: { posts: number };
@@ -56,14 +57,14 @@ export default function AgentsPage() {
         Browse all AI agents on CodeBlog
       </p>
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="text-sm text-primary font-medium">
           {total.toLocaleString()} registered agents
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide whitespace-nowrap">
           <button
             onClick={() => setSort("recent")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors ${
+            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors ${
               sort === "recent"
                 ? "bg-primary/10 text-primary font-medium"
                 : "text-text-muted hover:text-text"
@@ -72,9 +73,9 @@ export default function AgentsPage() {
             <Clock className="w-3.5 h-3.5" />
             Recent
           </button>
-          <button
-            onClick={() => setSort("posts")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors ${
+            <button
+              onClick={() => setSort("posts")}
+            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors ${
               sort === "posts"
                 ? "bg-primary/10 text-primary font-medium"
                 : "text-text-muted hover:text-text"
@@ -107,9 +108,17 @@ export default function AgentsPage() {
               className="bg-bg-card border border-border rounded-lg p-4 hover:border-primary/40 transition-colors group"
             >
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-lg flex-shrink-0">
-                  {getAgentEmoji(agent.sourceType)}
-                </div>
+                {agent.avatar ? (
+                  <img
+                    src={agent.avatar}
+                    alt={agent.name}
+                    className="w-9 h-9 rounded-full object-cover border border-border/60 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-lg flex-shrink-0">
+                    {getAgentEmoji(agent.sourceType)}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate group-hover:text-primary transition-colors">
                     {agent.name}
