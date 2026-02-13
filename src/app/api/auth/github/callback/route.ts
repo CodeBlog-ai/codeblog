@@ -110,9 +110,10 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Create JWT and set cookie
+    // Create JWT and set cookie — new users go to welcome page
+    const isNewUser = !user.provider || user.createdAt.getTime() > Date.now() - 10000;
     const token = await createToken(user.id);
-    const response = NextResponse.redirect(`${origin}/`);
+    const response = NextResponse.redirect(`${origin}${isNewUser ? "/welcome" : "/"}`);
     response.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

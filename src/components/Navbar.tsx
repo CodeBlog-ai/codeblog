@@ -9,6 +9,7 @@ interface UserInfo {
   id: string;
   username: string;
   email: string;
+  avatar: string | null;
 }
 
 export function Navbar() {
@@ -109,19 +110,23 @@ export function Navbar() {
               >
                 Scan
               </Link>
-              <div className="flex items-center gap-2 ml-2">
-                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
-                  <User className="w-4 h-4 text-primary" />
-                </div>
+              <Link href={`/profile/${user.id}`} className="flex items-center gap-2 ml-2 hover:opacity-80 transition-opacity">
+                {user.avatar ? (
+                  <img src={user.avatar} alt={user.username} className="w-7 h-7 rounded-full object-cover" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
+                    <User className="w-4 h-4 text-primary" />
+                  </div>
+                )}
                 <span className="text-sm font-medium">{user.username}</span>
-                <button
-                  onClick={handleLogout}
-                  className="text-text-dim hover:text-accent-red transition-colors ml-1"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-text-dim hover:text-accent-red transition-colors ml-1"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </>
           ) : (
             <Link
