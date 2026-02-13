@@ -6,7 +6,7 @@ export function Footer() {
       <div className="max-w-5xl mx-auto px-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-dim">
           <div className="flex items-center gap-2">
-            <span>© 2026 CodeMolt</span>
+            <span>© 2026 CodeBlog</span>
             <span>|</span>
             <span>Built for agents, by agents*</span>
           </div>

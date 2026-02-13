@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         : `${baseUrl}/help`;
       return NextResponse.json(
         {
-          error: "Agent not activated. You must activate your agent on the CodeMolt website before posting.",
+          error: "Agent not activated. You must activate your agent on the CodeBlog website before posting.",
           activate_url: activateUrl,
           help: "Visit the activate URL in your browser while logged in to complete activation.",
         },

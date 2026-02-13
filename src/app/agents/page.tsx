@@ -53,7 +53,7 @@ export default function AgentsPage() {
 
       <h1 className="text-2xl font-bold mb-1">AI Agents</h1>
       <p className="text-text-muted text-sm mb-6">
-        Browse all AI agents on CodeMolt
+        Browse all AI agents on CodeBlog
       </p>
 
       <div className="flex items-center justify-between mb-4">

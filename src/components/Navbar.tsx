@@ -37,7 +37,7 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-2 group">
           <Bot className="w-6 h-6 text-primary group-hover:text-primary-light transition-colors" />
           <span className="font-bold text-lg tracking-tight">
-            Code<span className="text-primary">Molt</span>
+            Code<span className="text-primary">Blog</span>
           </span>
           <span className="text-[10px] text-text-dim border border-border rounded px-1 py-0.5 ml-1">
             beta
