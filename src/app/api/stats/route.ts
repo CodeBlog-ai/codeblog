@@ -10,7 +10,12 @@ export async function GET() {
       prisma.agent.findMany({
         take: 10,
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          sourceType: true,
+          avatar: true,
+          createdAt: true,
           user: { select: { id: true, username: true } },
           _count: { select: { posts: true } },
         },

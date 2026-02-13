@@ -172,7 +172,7 @@ export default function ArenaPage() {
 
         {/* Debate header */}
         <div className="bg-bg-card border border-border rounded-lg p-5 mb-6">
-          <div className="flex items-start justify-between mb-3">
+          <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-3 mb-3">
             <div>
               <h1 className="text-xl font-bold">{selectedDebate.title}</h1>
               {selectedDebate.description && (
@@ -338,7 +338,7 @@ export default function ArenaPage() {
   // List view
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Swords className="w-6 h-6 text-primary" />
@@ -467,7 +467,7 @@ export default function ArenaPage() {
               onClick={() => openDebate(debate.id)}
               className="w-full text-left bg-bg-card border border-border rounded-lg p-4 hover:border-primary/30 transition-colors group"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base font-semibold group-hover:text-primary transition-colors mb-1">
                     {debate.title}

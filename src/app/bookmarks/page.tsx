@@ -184,7 +184,7 @@ export default function BookmarksPage() {
                       <span>{formatDate(post.created_at)}</span>
                       <button
                         onClick={() => handleRemoveBookmark(post.id)}
-                        className="ml-auto text-text-dim hover:text-accent-red transition-colors"
+                        className="ml-0 sm:ml-auto text-text-dim hover:text-accent-red transition-colors"
                         title="Remove bookmark"
                       >
                         <Bookmark className="w-3.5 h-3.5 fill-current text-primary" />

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bot, LogOut, User, Menu, X, Search, Swords, Bell, Bookmark, Rss, TrendingUp, Tag, LayoutGrid, HelpCircle, Plug, ScanLine, Github, ChevronDown, Users, Settings } from "lucide-react";
+import { Bot, LogOut, User, Menu, X, Search, Swords, Bell, TrendingUp, Tag, LayoutGrid, HelpCircle, Plug, Github, ChevronDown, Settings } from "lucide-react";
 import { useLang } from "./Providers";
 
 interface UserInfo {
@@ -210,35 +210,6 @@ export function Navbar() {
           {/* User section */}
           {user ? (
             <div className="flex items-center gap-1">
-              {/* Icon-only links */}
-              <Link
-                href={`/profile/${user.id}`}
-                className="text-text-muted hover:text-text transition-colors p-1.5 rounded-md hover:bg-bg-input"
-                title={t("nav.myAgents")}
-              >
-                <Users className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/scan"
-                className="text-text-muted hover:text-text transition-colors p-1.5 rounded-md hover:bg-bg-input"
-                title={t("nav.scan")}
-              >
-                <ScanLine className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/feed"
-                className="text-text-muted hover:text-text transition-colors p-1.5 rounded-md hover:bg-bg-input"
-                title={t("nav.feed") || "Following Feed"}
-              >
-                <Rss className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/bookmarks"
-                className="text-text-muted hover:text-text transition-colors p-1.5 rounded-md hover:bg-bg-input"
-                title={t("nav.bookmarks") || "Bookmarks"}
-              >
-                <Bookmark className="w-4 h-4" />
-              </Link>
               <Link
                 href="/notifications"
                 className="relative text-text-muted hover:text-text transition-colors p-1.5 rounded-md hover:bg-bg-input"
@@ -362,39 +333,11 @@ export function Navbar() {
           {user ? (
             <>
               <Link
-                href="/feed"
-                className="block text-sm text-text-muted hover:text-text py-1"
-                onClick={() => setMenuOpen(false)}
-              >
-                {t("nav.feed")}
-              </Link>
-              <Link
-                href="/bookmarks"
-                className="block text-sm text-text-muted hover:text-text py-1"
-                onClick={() => setMenuOpen(false)}
-              >
-                {t("nav.bookmarks")}
-              </Link>
-              <Link
                 href="/notifications"
                 className="block text-sm text-text-muted hover:text-text py-1"
                 onClick={() => setMenuOpen(false)}
               >
                 {t("nav.notifications")} {unreadCount > 0 && `(${unreadCount})`}
-              </Link>
-              <Link
-                href={`/profile/${user.id}`}
-                className="block text-sm text-text-muted hover:text-text py-1"
-                onClick={() => setMenuOpen(false)}
-              >
-                {t("nav.myAgents")}
-              </Link>
-              <Link
-                href="/scan"
-                className="block text-sm text-text-muted hover:text-text py-1"
-                onClick={() => setMenuOpen(false)}
-              >
-                {t("nav.scan")}
               </Link>
               <Link
                 href="/settings"

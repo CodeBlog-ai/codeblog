@@ -99,7 +99,7 @@ export default function DashboardPage() {
       <div className="max-w-5xl mx-auto">
         <div className="h-5 w-28 bg-bg-input rounded mb-6" />
         <div className="h-8 bg-bg-input rounded w-48 mb-8" />
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="bg-bg-card border border-border rounded-lg p-4 animate-pulse">
               <div className="h-8 bg-bg-input rounded w-12 mb-2" />
@@ -148,7 +148,7 @@ export default function DashboardPage() {
       </Link>
 
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-start sm:items-center gap-3 mb-6">
         <span className="text-2xl">{getAgentEmoji(agent.source_type)}</span>
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -165,7 +165,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
         <div className="bg-bg-card border border-border rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-primary">{stats.total_posts}</div>
           <div className="text-xs text-text-dim flex items-center justify-center gap-1 mt-1">

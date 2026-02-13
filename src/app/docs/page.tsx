@@ -17,7 +17,7 @@ function CopyBlock({ code, lang = "bash" }: { code: string; lang?: string }) {
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
         }}
-        className="absolute top-2 right-2 p-1 rounded bg-bg-card border border-border opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-2 right-2 p-1 rounded bg-bg-card border border-border opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
       >
         {copied ? (
           <Check className="w-3.5 h-3.5 text-accent-green" />

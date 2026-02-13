@@ -81,6 +81,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   // Agent form
   const [agentName, setAgentName] = useState("");
   const [agentDesc, setAgentDesc] = useState("");
+  const [agentAvatar, setAgentAvatar] = useState("");
   const [agentCreating, setAgentCreating] = useState(false);
   const [newAgentKey, setNewAgentKey] = useState<{ name: string; apiKey: string; sourceType: string; activateToken?: string } | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
@@ -205,6 +206,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         body: JSON.stringify({
           name: agentName,
           description: agentDesc || null,
+          avatar: agentAvatar || null,
           sourceType: "multi",
         }),
       });
@@ -215,6 +217,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         setNewAgentKey({ name: data.agent.name, apiKey: data.apiKey, sourceType: "multi", activateToken: data.activateToken });
         setAgentName("");
         setAgentDesc("");
+        setAgentAvatar("");
       }
     } catch {
       // ignore
@@ -410,8 +413,8 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       </Link>
 
       {/* Profile header */}
-      <div className="bg-bg-card border border-border rounded-xl p-6 mb-4">
-        <div className="flex items-start gap-5">
+      <div className="bg-bg-card border border-border rounded-xl p-4 sm:p-6 mb-4">
+        <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
           {/* Avatar */}
           <div className="flex-shrink-0">
             {profileUser.avatar ? (
@@ -428,8 +431,8 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
           </div>
 
           {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex-1 min-w-0 w-full">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <h1 className="text-2xl font-bold">{profileUser.username}</h1>
             </div>
             {profileUser.bio ? (
@@ -445,7 +448,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto sm:flex-shrink-0">
             {isOwner ? (
               <>
                 <button
@@ -487,7 +490,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-6 gap-3 mt-5 pt-5 border-t border-border">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-5 pt-5 border-t border-border">
           <div className="text-center p-2 rounded-lg bg-bg-input/50">
             <div className="text-xl font-bold text-primary">{agents.length}</div>
             <div className="text-xs text-text-dim flex items-center justify-center gap-1 mt-0.5"><Bot className="w-3 h-3" /> agents</div>
@@ -664,10 +667,10 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       )}
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 mb-4 border-b border-border pb-2">
+      <div className="flex items-center gap-1 mb-4 border-b border-border pb-2 overflow-x-auto scrollbar-hide whitespace-nowrap">
         <button
           onClick={() => setActiveTab("posts")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
             activeTab === "posts"
               ? "bg-primary/10 text-primary font-medium"
               : "text-text-muted hover:text-text"
@@ -678,7 +681,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         </button>
         <button
           onClick={() => setActiveTab("agents")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
             activeTab === "agents"
               ? "bg-primary/10 text-primary font-medium"
               : "text-text-muted hover:text-text"
@@ -727,6 +730,18 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                   placeholder="Analyzes my daily coding sessions"
                 />
               </div>
+              <div>
+                <label className="block text-xs text-text-muted mb-1">
+                  Avatar URL (optional)
+                </label>
+                <input
+                  type="url"
+                  value={agentAvatar}
+                  onChange={(e) => setAgentAvatar(e.target.value)}
+                  className="w-full bg-bg-input border border-border rounded-md px-3 py-1.5 text-sm text-text focus:outline-none focus:border-primary"
+                  placeholder="https://example.com/agent-avatar.png"
+                />
+              </div>
               <button
                 type="submit"
                 disabled={agentCreating}
@@ -757,7 +772,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
             <div className="space-y-3">
               <div>
                 <p className="text-xs text-text-muted mb-1">Your API Key (save it now, shown only once):</p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <code className="flex-1 bg-[#1a1a1a] border border-border rounded px-3 py-1.5 text-sm font-mono text-accent-green break-all">
                     {newAgentKey.apiKey}
                   </code>
@@ -917,7 +932,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                       </a>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
                     <span className="text-xs text-text-dim">{agent._count.posts} posts</span>
                     {isOwner && (
                       <>

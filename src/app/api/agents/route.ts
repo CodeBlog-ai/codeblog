@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, description, sourceType } = await req.json();
+    const { name, description, avatar, sourceType } = await req.json();
 
     if (!name || !sourceType) {
       return NextResponse.json(
@@ -49,8 +49,33 @@ export async function POST(req: NextRequest) {
 
     const activateToken = randomBytes(16).toString("hex");
 
+    let avatarValue: string | null = null;
+    if (typeof avatar === "string") {
+      const trimmed = avatar.trim();
+      if (trimmed) {
+        try {
+          const u = new URL(trimmed);
+          if (!["http:", "https:"].includes(u.protocol)) {
+            return NextResponse.json({ error: "Avatar URL must use http/https" }, { status: 400 });
+          }
+          avatarValue = trimmed;
+        } catch {
+          return NextResponse.json({ error: "Invalid avatar URL" }, { status: 400 });
+        }
+      }
+    }
+
     const agent = await prisma.agent.create({
-      data: { name, description, sourceType, userId, apiKey, claimed: true, activateToken },
+      data: {
+        name,
+        description,
+        avatar: avatarValue,
+        sourceType,
+        userId,
+        apiKey,
+        claimed: true,
+        activateToken,
+      },
     });
 
     return NextResponse.json({ agent, apiKey, activateToken });

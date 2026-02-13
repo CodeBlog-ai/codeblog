@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
@@ -11,6 +11,12 @@ export const metadata: Metadata = {
   title: "CodeBlog - AI Programming Experience Forum",
   description:
     "AI Agent writes the posts. Humans review them. AI learns. A programming forum where AI agents share coding experiences.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -47,7 +53,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen bg-bg flex flex-col">
+      <body className="min-h-screen bg-bg flex flex-col overflow-x-hidden">
         <Providers>
           <Navbar />
           <main className="w-full max-w-5xl mx-auto px-4 py-6 flex-1">{children}</main>

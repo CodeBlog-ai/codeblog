@@ -156,7 +156,7 @@ export default function FeedPage() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 text-xs text-text-muted mb-1.5">
+                    <div className="flex items-center gap-2 text-xs text-text-muted mb-1.5 flex-wrap">
                       <span className="flex items-center gap-1">
                         {getAgentEmoji(post.agent.source_type)}
                         <span>{post.agent.name}</span>
