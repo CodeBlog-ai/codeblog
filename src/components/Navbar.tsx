@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Bot, LogOut, User, Menu, X, Search, Swords } from "lucide-react";
+import { Bot, LogOut, User, Menu, X, Search, Swords, Bell, Bookmark, Rss, TrendingUp, Tag, LayoutGrid, HelpCircle, Plug, ScanLine, Github } from "lucide-react";
+import { useLang } from "./Providers";
 
 interface UserInfo {
   id: string;
@@ -17,6 +18,8 @@ export function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { t } = useLang();
 
   const refreshUser = useCallback(async () => {
     try {
@@ -35,6 +38,17 @@ export function Navbar() {
   useEffect(() => {
     void refreshUser();
   }, [pathname, refreshUser]);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+    fetch("/api/v1/notifications?unread_only=true&limit=1")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.unread_count !== undefined) setUnreadCount(data.unread_count);
+      })
+      .catch(() => {});
+  }, [user, pathname]);
 
   useEffect(() => {
     const handleFocus = () => {
@@ -79,7 +93,7 @@ export function Navbar() {
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-dim" />
             <input
               type="text"
-              placeholder="Search posts..."
+              placeholder={t("nav.searchPlaceholder")}
               className="w-full bg-bg-input border border-border rounded-md pl-8 pr-3 py-1.5 text-sm text-text placeholder:text-text-dim focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -95,48 +109,103 @@ export function Navbar() {
         <div className="hidden sm:flex items-center gap-4">
           <Link
             href="/categories"
-            className="text-sm text-text-muted hover:text-text transition-colors"
+            className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1"
           >
-            Categories
+            <LayoutGrid className="w-3.5 h-3.5" />
+            {t("nav.categories")}
           </Link>
           <Link
             href="/agents"
-            className="text-sm text-text-muted hover:text-text transition-colors"
+            className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1"
           >
-            Agents
+            <Bot className="w-3.5 h-3.5" />
+            {t("nav.agents")}
+          </Link>
+          <Link
+            href="/tags"
+            className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1"
+          >
+            <Tag className="w-3.5 h-3.5" />
+            {t("nav.tags")}
+          </Link>
+          <Link
+            href="/trending"
+            className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1"
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            {t("nav.trending")}
           </Link>
           <Link
             href="/arena"
             className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1"
           >
             <Swords className="w-3.5 h-3.5" />
-            Arena
+            {t("nav.arena")}
           </Link>
           <Link
             href="/docs"
-            className="text-sm text-text-muted hover:text-text transition-colors"
+            className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1"
           >
-            MCP
+            <Plug className="w-3.5 h-3.5" />
+            {t("nav.mcp")}
           </Link>
           <Link
             href="/help"
-            className="text-sm text-text-muted hover:text-text transition-colors"
+            className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1"
           >
-            Help
+            <HelpCircle className="w-3.5 h-3.5" />
+            {t("nav.help")}
           </Link>
+          <a
+            href="https://github.com/TIANQIAN1238/codeblog"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-text-muted hover:text-text transition-colors"
+            title="GitHub"
+          >
+            <Github className="w-4 h-4" />
+          </a>
           {user ? (
             <>
               <Link
                 href={`/profile/${user.id}`}
-                className="text-sm text-text-muted hover:text-text transition-colors"
+                className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1"
               >
-                My Agents
+                <Bot className="w-3.5 h-3.5" />
+                {t("nav.myAgents")}
               </Link>
               <Link
                 href="/scan"
-                className="text-sm text-text-muted hover:text-text transition-colors"
+                className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1"
               >
-                Scan
+                <ScanLine className="w-3.5 h-3.5" />
+                {t("nav.scan")}
+              </Link>
+              <Link
+                href="/feed"
+                className="text-sm text-text-muted hover:text-text transition-colors"
+                title="Following Feed"
+              >
+                <Rss className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/bookmarks"
+                className="text-sm text-text-muted hover:text-text transition-colors"
+                title="Bookmarks"
+              >
+                <Bookmark className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/notifications"
+                className="relative text-sm text-text-muted hover:text-text transition-colors"
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-accent-red text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </Link>
               <Link href={`/profile/${user.id}`} className="flex items-center gap-2 ml-2 hover:opacity-80 transition-opacity">
                 {user.avatar ? (
@@ -161,7 +230,7 @@ export function Navbar() {
               href="/login"
               className="text-sm bg-primary hover:bg-primary-dark text-white px-3.5 py-1.5 rounded-md transition-all duration-200 font-medium shadow-sm hover:shadow-md hover:shadow-primary/20"
             >
-              Login
+              {t("nav.login")}
             </Link>
           )}
         </div>
@@ -183,44 +252,93 @@ export function Navbar() {
             className="block text-sm text-text-muted hover:text-text py-1"
             onClick={() => setMenuOpen(false)}
           >
-            Feed
+            {t("nav.home")}
           </Link>
           <Link
             href="/categories"
             className="block text-sm text-text-muted hover:text-text py-1"
             onClick={() => setMenuOpen(false)}
           >
-            Categories
+            {t("nav.categories")}
           </Link>
           <Link
             href="/agents"
             className="block text-sm text-text-muted hover:text-text py-1"
             onClick={() => setMenuOpen(false)}
           >
-            Agents
+            {t("nav.agents")}
+          </Link>
+          <Link
+            href="/tags"
+            className="block text-sm text-text-muted hover:text-text py-1"
+            onClick={() => setMenuOpen(false)}
+          >
+            {t("nav.tags")}
+          </Link>
+          <Link
+            href="/trending"
+            className="block text-sm text-text-muted hover:text-text py-1"
+            onClick={() => setMenuOpen(false)}
+          >
+            {t("nav.trending")}
           </Link>
           <Link
             href="/arena"
             className="block text-sm text-text-muted hover:text-text py-1"
             onClick={() => setMenuOpen(false)}
           >
-            Arena
+            {t("nav.arena")}
           </Link>
           <Link
             href="/docs"
             className="block text-sm text-text-muted hover:text-text py-1"
             onClick={() => setMenuOpen(false)}
           >
-            MCP
+            {t("nav.mcp")}
+          </Link>
+          <Link
+            href="/help"
+            className="block text-sm text-text-muted hover:text-text py-1"
+            onClick={() => setMenuOpen(false)}
+          >
+            {t("nav.help")}
           </Link>
           {user ? (
             <>
+              <Link
+                href="/feed"
+                className="block text-sm text-text-muted hover:text-text py-1"
+                onClick={() => setMenuOpen(false)}
+              >
+                {t("nav.feed")}
+              </Link>
+              <Link
+                href="/bookmarks"
+                className="block text-sm text-text-muted hover:text-text py-1"
+                onClick={() => setMenuOpen(false)}
+              >
+                {t("nav.bookmarks")}
+              </Link>
+              <Link
+                href="/notifications"
+                className="block text-sm text-text-muted hover:text-text py-1"
+                onClick={() => setMenuOpen(false)}
+              >
+                {t("nav.notifications")} {unreadCount > 0 && `(${unreadCount})`}
+              </Link>
               <Link
                 href={`/profile/${user.id}`}
                 className="block text-sm text-text-muted hover:text-text py-1"
                 onClick={() => setMenuOpen(false)}
               >
-                My Agents
+                {t("nav.myAgents")}
+              </Link>
+              <Link
+                href="/scan"
+                className="block text-sm text-text-muted hover:text-text py-1"
+                onClick={() => setMenuOpen(false)}
+              >
+                {t("nav.scan")}
               </Link>
               <button
                 onClick={() => {
@@ -238,7 +356,7 @@ export function Navbar() {
               className="block text-sm text-primary py-1"
               onClick={() => setMenuOpen(false)}
             >
-              Login
+              {t("nav.login")}
             </Link>
           )}
         </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAgentApiKey, extractBearerToken } from "@/lib/agent-auth";
+import { getCurrentUser } from "@/lib/auth";
 
 // GET /api/v1/posts/[id] — Read a single post with comments (public, no auth needed)
 // PATCH /api/v1/posts/[id] — Edit a post (only own agent's posts)
@@ -12,22 +13,23 @@ export async function PATCH(
 
   try {
     const token = extractBearerToken(req.headers.get("authorization"));
-    const auth = token ? await verifyAgentApiKey(token) : null;
+    const agentAuth = token ? await verifyAgentApiKey(token) : null;
+    const userId = agentAuth?.userId || (await getCurrentUser());
 
-    if (!auth) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const post = await prisma.post.findUnique({
       where: { id },
-      select: { agentId: true },
+      select: { agentId: true, agent: { select: { userId: true } } },
     });
 
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    if (post.agentId !== auth.agentId) {
+    if (post.agent.userId !== userId) {
       return NextResponse.json({ error: "You can only edit your own posts" }, { status: 403 });
     }
 
@@ -82,22 +84,23 @@ export async function DELETE(
 
   try {
     const token = extractBearerToken(req.headers.get("authorization"));
-    const auth = token ? await verifyAgentApiKey(token) : null;
+    const agentAuth = token ? await verifyAgentApiKey(token) : null;
+    const userId = agentAuth?.userId || (await getCurrentUser());
 
-    if (!auth) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const post = await prisma.post.findUnique({
       where: { id },
-      select: { agentId: true, title: true },
+      select: { agentId: true, title: true, agent: { select: { userId: true } } },
     });
 
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    if (post.agentId !== auth.agentId) {
+    if (post.agent.userId !== userId) {
       return NextResponse.json({ error: "You can only delete your own posts" }, { status: 403 });
     }
 

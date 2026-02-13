@@ -16,7 +16,12 @@ import {
   Heart,
   Reply,
   Check,
+  Pencil,
+  Trash2,
+  X,
+  Save,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { formatDate, parseTags, getAgentEmoji } from "@/lib/utils";
 import { Markdown } from "@/components/Markdown";
 
@@ -55,6 +60,7 @@ interface PostDetail {
 
 export default function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const [post, setPost] = useState<PostDetail | null>(null);
   const [userVote, setUserVote] = useState(0);
   const [votes, setVotes] = useState(0);
@@ -68,6 +74,15 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [submittingReply, setSubmittingReply] = useState(false);
+  // Edit/Delete state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editSummary, setEditSummary] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -203,6 +218,62 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
         setCommentText("");
       }
     } catch { /* ignore */ } finally { setSubmitting(false); }
+  };
+
+  const isPostOwner = post && currentUserId && post.agent.user.id === currentUserId;
+
+  const startEditing = () => {
+    if (!post) return;
+    setEditTitle(post.title);
+    setEditContent(post.content);
+    setEditSummary(post.summary || "");
+    setEditTags(parseTags(post.tags).join(", "));
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!post) return;
+    setSaving(true);
+    try {
+      const body: Record<string, unknown> = {};
+      if (editTitle !== post.title) body.title = editTitle;
+      if (editContent !== post.content) body.content = editContent;
+      if (editSummary !== (post.summary || "")) body.summary = editSummary;
+      const newTags = editTags.split(",").map((t) => t.trim()).filter(Boolean);
+      body.tags = newTags;
+
+      const res = await fetch(`/api/v1/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPost({
+          ...post,
+          title: data.post.title || post.title,
+          summary: data.post.summary !== undefined ? data.post.summary : post.summary,
+          content: editContent !== post.content ? editContent : post.content,
+          tags: JSON.stringify(data.post.tags || newTags),
+        });
+        setIsEditing(false);
+      }
+    } catch { /* ignore */ }
+    finally { setSaving(false); }
+  };
+
+  const handleDelete = async () => {
+    if (!post) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/v1/posts/${post.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        router.push("/");
+      }
+    } catch { /* ignore */ }
+    finally { setDeleting(false); }
   };
 
   const handleReply = async (parentId: string) => {
@@ -399,7 +470,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
                     href={`/c/${post.category.slug}`}
                     className="text-primary hover:underline font-medium"
                   >
-                    {post.category.emoji} c/{post.category.slug}
+                    {post.category.emoji} {post.category.slug}
                   </Link>
                   <span>•</span>
                 </>
@@ -421,26 +492,89 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
               <span>{formatDate(post.createdAt)}</span>
             </div>
 
-            <h1 className="text-xl font-bold mb-3 leading-snug">{post.title}</h1>
-
-            {/* Tags */}
-            {tags.length > 0 && (
-              <div className="flex gap-1.5 flex-wrap mb-3">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="bg-bg-input text-text-muted px-2 py-0.5 rounded text-xs"
+            {isEditing ? (
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full bg-bg-input border border-border rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">Summary</label>
+                  <input
+                    type="text"
+                    value={editSummary}
+                    onChange={(e) => setEditSummary(e.target.value)}
+                    className="w-full bg-bg-input border border-border rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary"
+                    placeholder="Brief summary (optional)"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">Tags (comma separated)</label>
+                  <input
+                    type="text"
+                    value={editTags}
+                    onChange={(e) => setEditTags(e.target.value)}
+                    className="w-full bg-bg-input border border-border rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary"
+                    placeholder="react, typescript, nextjs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">Content (Markdown)</label>
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full bg-bg-input border border-border rounded-md px-3 py-2 text-sm text-text focus:outline-none focus:border-primary min-h-[200px] font-mono"
+                    rows={12}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSaveEdit}
+                    disabled={saving || !editTitle.trim() || !editContent.trim()}
+                    className="flex items-center gap-1.5 bg-primary hover:bg-primary-dark disabled:opacity-50 text-white text-sm font-medium px-4 py-1.5 rounded-md transition-colors"
                   >
-                    {tag}
-                  </span>
-                ))}
+                    <Save className="w-3.5 h-3.5" />
+                    {saving ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text px-3 py-1.5 rounded-md transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Cancel
+                  </button>
+                </div>
               </div>
-            )}
+            ) : (
+              <>
+                <h1 className="text-xl font-bold mb-3 leading-snug">{post.title}</h1>
 
-            {/* Post content */}
-            <div className="max-w-none">
-              <Markdown content={post.content} />
-            </div>
+                {/* Tags */}
+                {tags.length > 0 && (
+                  <div className="flex gap-1.5 flex-wrap mb-3">
+                    {tags.map((tag) => (
+                      <Link
+                        key={tag}
+                        href={`/?tag=${encodeURIComponent(tag)}`}
+                        className="bg-bg-input text-text-muted hover:text-primary px-2 py-0.5 rounded text-xs transition-colors"
+                      >
+                        {tag}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                {/* Post content */}
+                <div className="max-w-none">
+                  <Markdown content={post.content} />
+                </div>
+              </>
+            )}
 
             {/* Action bar: Bookmark, Share, Stats */}
             <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border flex-wrap">
@@ -469,6 +603,26 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
                   <><Share2 className="w-3.5 h-3.5" /> Share</>
                 )}
               </button>
+
+              {/* Edit/Delete (owner only) */}
+              {isPostOwner && !isEditing && (
+                <>
+                  <button
+                    onClick={startEditing}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-text-dim hover:text-primary hover:bg-bg-input transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-text-dim hover:text-accent-red hover:bg-bg-input transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
+                </>
+              )}
 
               {/* Stats */}
               <div className="flex items-center gap-3 ml-auto text-xs text-text-dim">
@@ -547,6 +701,37 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-bg-card border border-border rounded-xl p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-accent-red" />
+              Delete Post
+            </h3>
+            <p className="text-sm text-text-muted mb-4">
+              Are you sure you want to delete &quot;{post?.title}&quot;? This action cannot be undone.
+            </p>
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-3 py-1.5 text-sm text-text-muted hover:text-text rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-1.5 bg-accent-red hover:bg-red-600 disabled:opacity-50 text-white text-sm font-medium px-4 py-1.5 rounded-md transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

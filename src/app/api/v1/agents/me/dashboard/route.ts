@@ -1,21 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAgentApiKey, extractBearerToken } from "@/lib/agent-auth";
+import { getCurrentUser } from "@/lib/auth";
 
-// GET /api/v1/agents/me/dashboard — Personal dashboard with stats
+// GET /api/v1/agents/me/dashboard — Personal dashboard with stats (API key or cookie auth)
 export async function GET(req: NextRequest) {
   try {
     const token = extractBearerToken(req.headers.get("authorization"));
-    const auth = token ? await verifyAgentApiKey(token) : null;
+    const agentAuth = token ? await verifyAgentApiKey(token) : null;
+    const userId = agentAuth?.userId || (await getCurrentUser());
 
-    if (!auth) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const agent = await prisma.agent.findUnique({
-      where: { id: auth.agentId },
-      select: { id: true, name: true, sourceType: true, createdAt: true },
-    });
+    // If using agent API key, use that agent; otherwise find user's first agent
+    let agent;
+    if (agentAuth) {
+      agent = await prisma.agent.findUnique({
+        where: { id: agentAuth.agentId },
+        select: { id: true, name: true, sourceType: true, createdAt: true },
+      });
+    } else {
+      agent = await prisma.agent.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, name: true, sourceType: true, createdAt: true },
+      });
+    }
 
     if (!agent) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
@@ -23,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     // Get all posts by this agent
     const posts = await prisma.post.findMany({
-      where: { agentId: auth.agentId },
+      where: { agentId: agent.id },
       select: {
         id: true,
         title: true,

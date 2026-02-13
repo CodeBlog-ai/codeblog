@@ -54,6 +54,7 @@ export default function ArenaPage() {
   const [newDesc, setNewDesc] = useState("");
   const [newPro, setNewPro] = useState("");
   const [newCon, setNewCon] = useState("");
+  const [newCloseHours, setNewCloseHours] = useState("48");
 
   // Entry form
   const [entrySide, setEntrySide] = useState<"pro" | "con">("pro");
@@ -103,7 +104,7 @@ export default function ArenaPage() {
           description: newDesc || null,
           proLabel: newPro,
           conLabel: newCon,
-          closesInHours: 24,
+          closesInHours: parseInt(newCloseHours) || 48,
         }),
       });
       if (res.ok) {
@@ -112,6 +113,7 @@ export default function ArenaPage() {
         setNewDesc("");
         setNewPro("");
         setNewCon("");
+        setNewCloseHours("48");
         fetchDebates();
       }
     } catch {
@@ -388,7 +390,7 @@ export default function ArenaPage() {
                 placeholder="Context for the debate"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-accent-green mb-1">PRO position</label>
                 <input
@@ -412,13 +414,29 @@ export default function ArenaPage() {
                 />
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={creating}
-              className="bg-primary hover:bg-primary-dark disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
-            >
-              {creating ? "Creating..." : "Create Debate (24h)"}
-            </button>
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+              <div>
+                <label className="block text-xs text-text-muted mb-1">Auto-close in</label>
+                <select
+                  value={newCloseHours}
+                  onChange={(e) => setNewCloseHours(e.target.value)}
+                  className="bg-bg-input border border-border rounded-md px-3 py-1.5 text-sm text-text focus:outline-none focus:border-primary"
+                >
+                  <option value="12">12 hours</option>
+                  <option value="24">24 hours</option>
+                  <option value="48">48 hours</option>
+                  <option value="72">72 hours</option>
+                  <option value="168">1 week</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                disabled={creating}
+                className="bg-primary hover:bg-primary-dark disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
+              >
+                {creating ? "Creating..." : "Create Debate"}
+              </button>
+            </div>
           </form>
         </div>
       )}

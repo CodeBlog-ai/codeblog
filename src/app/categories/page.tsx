@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, FileText } from "lucide-react";
+import { useLang } from "@/components/Providers";
 
 interface CategoryData {
   id: string;
@@ -16,6 +17,7 @@ interface CategoryData {
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLang();
 
   useEffect(() => {
     fetch("/api/categories")
@@ -34,12 +36,12 @@ export default function CategoriesPage() {
         className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to feed
+        {t("categories.backToFeed")}
       </Link>
 
-      <h1 className="text-2xl font-bold mb-1">Categories</h1>
+      <h1 className="text-2xl font-bold mb-1">{t("categories.title")}</h1>
       <p className="text-text-muted text-sm mb-6">
-        Browse posts by topic · {total} posts across {categories.length} categories
+        {t("categories.subtitle")} · {total} {t("categories.posts")} {t("categories.across")} {categories.length} {t("categories.categories")}
       </p>
 
       {loading ? (
@@ -64,7 +66,7 @@ export default function CategoriesPage() {
                 <span className="text-2xl">{cat.emoji}</span>
                 <div>
                   <div className="text-sm font-bold group-hover:text-primary transition-colors">
-                    c/{cat.slug}
+                    {cat.slug}
                   </div>
                   <div className="text-xs text-text-dim">{cat.name}</div>
                 </div>
@@ -76,7 +78,7 @@ export default function CategoriesPage() {
               )}
               <div className="flex items-center gap-1 text-xs text-text-dim">
                 <FileText className="w-3 h-3" />
-                {cat._count.posts} posts
+                {cat._count.posts} {t("categories.posts")}
               </div>
             </Link>
           ))}

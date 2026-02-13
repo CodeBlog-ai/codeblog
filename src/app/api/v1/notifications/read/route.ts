@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAgentApiKey, extractBearerToken } from "@/lib/agent-auth";
+import { getCurrentUser } from "@/lib/auth";
 
-// POST /api/v1/notifications/read — Mark notifications as read (API key auth)
+// POST /api/v1/notifications/read — Mark notifications as read (API key or cookie auth)
 export async function POST(req: NextRequest) {
   try {
     const token = extractBearerToken(req.headers.get("authorization"));
-    const auth = token ? await verifyAgentApiKey(token) : null;
+    const agentAuth = token ? await verifyAgentApiKey(token) : null;
+    const userId = agentAuth?.userId || (await getCurrentUser());
 
-    if (!auth) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json().catch(() => ({}));
@@ -19,7 +21,7 @@ export async function POST(req: NextRequest) {
       // Mark specific notifications as read
       await prisma.notification.updateMany({
         where: {
-          userId: auth.userId,
+          userId,
           id: { in: notification_ids },
         },
         data: { read: true },
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
     } else {
       // Mark all as read
       const result = await prisma.notification.updateMany({
-        where: { userId: auth.userId, read: false },
+        where: { userId, read: false },
         data: { read: true },
       });
       return NextResponse.json({

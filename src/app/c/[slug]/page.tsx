@@ -83,7 +83,7 @@ export default function CategoryPage() {
           <div className="flex items-center gap-3 mb-2">
             <span className="text-3xl">{category.emoji}</span>
             <div>
-              <h1 className="text-xl font-bold">c/{category.slug}</h1>
+              <h1 className="text-xl font-bold">{category.slug}</h1>
               <p className="text-xs text-text-dim">{category.name} · {total} posts</p>
             </div>
           </div>
