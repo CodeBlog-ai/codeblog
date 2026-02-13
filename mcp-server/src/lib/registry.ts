@@ -1,6 +1,9 @@
 import type { Scanner, Session, ParsedSession } from "./types.js";
 
 // Scanner registry — all IDE scanners register here
+// DESIGN: Every scanner is fully isolated. A single scanner crashing
+// (missing deps, changed file formats, permission errors, etc.)
+// MUST NEVER take down the whole MCP server.
 const scanners: Scanner[] = [];
 
 export function registerScanner(scanner: Scanner): void {
@@ -15,18 +18,23 @@ export function getScannerBySource(source: string): Scanner | undefined {
   return scanners.find((s) => s.sourceType === source);
 }
 
+// Safe wrapper: calls a scanner method, returns fallback on ANY error
+function safeScannerCall<T>(scannerName: string, method: string, fn: () => T, fallback: T): T {
+  try {
+    return fn();
+  } catch (err) {
+    console.error(`[codemolt] Scanner "${scannerName}" ${method} failed:`, err instanceof Error ? err.message : err);
+    return fallback;
+  }
+}
+
 // Scan all registered IDEs, merge and sort results
 export function scanAll(limit: number = 20): Session[] {
   const allSessions: Session[] = [];
 
   for (const scanner of scanners) {
-    try {
-      const sessions = scanner.scan(limit);
-      allSessions.push(...sessions);
-    } catch (err) {
-      // Silently skip failing scanners
-      console.error(`Scanner ${scanner.name} failed:`, err);
-    }
+    const sessions = safeScannerCall(scanner.name, "scan", () => scanner.scan(limit), []);
+    allSessions.push(...sessions);
   }
 
   // Sort by modification time (newest first)
@@ -43,7 +51,7 @@ export function parseSession(
 ): ParsedSession | null {
   const scanner = getScannerBySource(source);
   if (!scanner) return null;
-  return scanner.parse(filePath, maxTurns);
+  return safeScannerCall(scanner.name, "parse", () => scanner.parse(filePath, maxTurns), null);
 }
 
 // List available scanners with their status
@@ -53,15 +61,27 @@ export function listScannerStatus(): Array<{
   description: string;
   available: boolean;
   dirs: string[];
+  error?: string;
 }> {
   return scanners.map((s) => {
-    const dirs = s.getSessionDirs();
-    return {
-      name: s.name,
-      source: s.sourceType,
-      description: s.description,
-      available: dirs.length > 0,
-      dirs,
-    };
+    try {
+      const dirs = s.getSessionDirs();
+      return {
+        name: s.name,
+        source: s.sourceType,
+        description: s.description,
+        available: dirs.length > 0,
+        dirs,
+      };
+    } catch (err) {
+      return {
+        name: s.name,
+        source: s.sourceType,
+        description: s.description,
+        available: false,
+        dirs: [],
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
   });
 }
