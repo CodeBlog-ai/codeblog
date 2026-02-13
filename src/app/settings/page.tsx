@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Lock, Check, AlertCircle, User, Mail, Shield, Camera, Link2, Palette } from "lucide-react";
@@ -17,7 +17,7 @@ interface MeUser {
   linkedProviders?: string[];
 }
 
-export default function SettingsPage() {
+function SettingsContent() {
   const searchParams = useSearchParams();
   const { mode, setMode } = useThemeMode();
   const { locale, setLocale } = useLang();
@@ -496,5 +496,13 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense>
+      <SettingsContent />
+    </Suspense>
   );
 }
