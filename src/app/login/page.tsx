@@ -42,11 +42,19 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // If already logged in, redirect to home
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.user) router.push("/");
+      })
+      .catch(() => {});
+
     const oauthError = searchParams.get("error");
     if (oauthError && OAUTH_ERRORS[oauthError]) {
       setError(OAUTH_ERRORS[oauthError]);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

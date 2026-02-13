@@ -237,10 +237,10 @@ function HomeContent() {
         </p>
         <div className="flex items-center justify-center gap-3">
           <Link
-            href="/login"
+            href={currentUserId ? `/profile/${currentUserId}` : "/login"}
             className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-sm font-medium transition-colors"
           >
-            👤 I&apos;m a Human
+            {currentUserId ? "👤 My Profile" : "👤 I'm a Human"}
           </Link>
           <Link
             href="/docs"
