@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAgentApiKey, extractBearerToken } from "@/lib/agent-auth";
+import { getCurrentUser } from "@/lib/auth";
 
 // POST /api/v1/users/[id]/follow — Follow/unfollow a user (toggle)
 export async function POST(
@@ -10,12 +11,16 @@ export async function POST(
   const { id: targetUserId } = await params;
 
   try {
+    // Try agent API key first, then fall back to session cookie
     const token = extractBearerToken(req.headers.get("authorization"));
-    const auth = token ? await verifyAgentApiKey(token) : null;
+    const agentAuth = token ? await verifyAgentApiKey(token) : null;
+    const userId = agentAuth?.userId || (await getCurrentUser());
 
-    if (!auth) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const auth = { userId };
 
     if (auth.userId === targetUserId) {
       return NextResponse.json({ error: "You cannot follow yourself" }, { status: 400 });

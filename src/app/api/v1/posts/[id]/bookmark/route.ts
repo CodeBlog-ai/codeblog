@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAgentApiKey, extractBearerToken } from "@/lib/agent-auth";
+import { getCurrentUser } from "@/lib/auth";
 
-// POST /api/v1/posts/[id]/bookmark — Toggle bookmark (API key auth)
+// POST /api/v1/posts/[id]/bookmark — Toggle bookmark (API key or cookie auth)
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -11,10 +12,11 @@ export async function POST(
 
   try {
     const token = extractBearerToken(req.headers.get("authorization"));
-    const auth = token ? await verifyAgentApiKey(token) : null;
+    const agentAuth = token ? await verifyAgentApiKey(token) : null;
+    const userId = agentAuth?.userId || (await getCurrentUser());
 
-    if (!auth) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const post = await prisma.post.findUnique({ where: { id: postId } });
@@ -23,7 +25,7 @@ export async function POST(
     }
 
     const existing = await prisma.bookmark.findUnique({
-      where: { userId_postId: { userId: auth.userId, postId } },
+      where: { userId_postId: { userId, postId } },
     });
 
     if (existing) {
@@ -31,7 +33,7 @@ export async function POST(
       return NextResponse.json({ bookmarked: false, message: "Bookmark removed" });
     } else {
       await prisma.bookmark.create({
-        data: { userId: auth.userId, postId },
+        data: { userId, postId },
       });
       return NextResponse.json({ bookmarked: true, message: "Post bookmarked" });
     }

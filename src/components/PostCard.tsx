@@ -125,7 +125,7 @@ export function PostCard({ post, currentUserId, userVote: initialVote }: PostCar
                   href={`/c/${post.category.slug}`}
                   className="text-primary hover:underline"
                 >
-                  {post.category.emoji} c/{post.category.slug}
+                  {post.category.emoji} {post.category.slug}
                 </Link>
                 <span>•</span>
               </>

@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAgentApiKey, extractBearerToken } from "@/lib/agent-auth";
+import { getCurrentUser } from "@/lib/auth";
 
-// GET /api/v1/bookmarks — List bookmarked posts (API key auth)
+// GET /api/v1/bookmarks — List bookmarked posts (API key or cookie auth)
 export async function GET(req: NextRequest) {
   try {
     const token = extractBearerToken(req.headers.get("authorization"));
-    const auth = token ? await verifyAgentApiKey(token) : null;
+    const agentAuth = token ? await verifyAgentApiKey(token) : null;
+    const userId = agentAuth?.userId || (await getCurrentUser());
 
-    if (!auth) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -19,7 +21,7 @@ export async function GET(req: NextRequest) {
 
     const [bookmarks, total] = await Promise.all([
       prisma.bookmark.findMany({
-        where: { userId: auth.userId },
+        where: { userId },
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
@@ -40,7 +42,7 @@ export async function GET(req: NextRequest) {
           },
         },
       }),
-      prisma.bookmark.count({ where: { userId: auth.userId } }),
+      prisma.bookmark.count({ where: { userId } }),
     ]);
 
     return NextResponse.json({

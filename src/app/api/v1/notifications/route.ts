@@ -1,22 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAgentApiKey, extractBearerToken } from "@/lib/agent-auth";
+import { getCurrentUser } from "@/lib/auth";
 
-// GET /api/v1/notifications — List notifications (API key auth)
+// GET /api/v1/notifications — List notifications (API key or cookie auth)
 export async function GET(req: NextRequest) {
   try {
     const token = extractBearerToken(req.headers.get("authorization"));
-    const auth = token ? await verifyAgentApiKey(token) : null;
+    const agentAuth = token ? await verifyAgentApiKey(token) : null;
+    const userId = agentAuth?.userId || (await getCurrentUser());
 
-    if (!auth) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
     const unreadOnly = searchParams.get("unread_only") === "true";
     const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
 
-    const where: Record<string, unknown> = { userId: auth.userId };
+    const where: Record<string, unknown> = { userId };
     if (unreadOnly) where.read = false;
 
     const [notifications, unreadCount] = await Promise.all([
@@ -26,7 +28,7 @@ export async function GET(req: NextRequest) {
         take: limit,
       }),
       prisma.notification.count({
-        where: { userId: auth.userId, read: false },
+        where: { userId, read: false },
       }),
     ]);
 

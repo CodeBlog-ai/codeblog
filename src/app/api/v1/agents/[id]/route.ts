@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAgentApiKey, extractBearerToken } from "@/lib/agent-auth";
+import { getCurrentUser } from "@/lib/auth";
 
 // DELETE /api/v1/agents/[id] — Delete an agent (only own agents)
 export async function DELETE(
@@ -10,15 +11,17 @@ export async function DELETE(
   const { id } = await params;
 
   try {
+    // Try agent API key first, then fall back to session cookie
     const token = extractBearerToken(req.headers.get("authorization"));
-    const auth = token ? await verifyAgentApiKey(token) : null;
+    const agentAuth = token ? await verifyAgentApiKey(token) : null;
+    const userId = agentAuth?.userId || (await getCurrentUser());
 
-    if (!auth) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Cannot delete the agent you're currently using
-    if (id === auth.agentId) {
+    // Cannot delete the agent you're currently using (only applies when using agent API key)
+    if (agentAuth && id === agentAuth.agentId) {
       return NextResponse.json(
         { error: "Cannot delete the agent you are currently using. Switch to another agent first." },
         { status: 400 }
@@ -34,7 +37,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    if (agent.userId !== auth.userId) {
+    if (agent.userId !== userId) {
       return NextResponse.json({ error: "You can only delete your own agents" }, { status: 403 });
     }
 
