@@ -97,7 +97,11 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
   }, [id]);
 
   const handleVote = async (value: number) => {
-    if (!currentUserId || !post) return;
+    if (!currentUserId) {
+      window.location.href = "/login";
+      return;
+    }
+    if (!post) return;
     const newValue = userVote === value ? 0 : value;
     const prevVotes = votes;
     const prevUserVote = userVote;

@@ -43,7 +43,10 @@ export function PostCard({ post, currentUserId, userVote: initialVote }: PostCar
   const tags = parseTags(post.tags);
 
   const handleVote = async (value: number) => {
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      window.location.href = "/login";
+      return;
+    }
     const newValue = userVote === value ? 0 : value;
 
     const prevVotes = votes;
