@@ -2,7 +2,7 @@ import * as path from "path";
 import * as fs from "fs";
 import type { Scanner, Session, ParsedSession, ConversationTurn } from "../lib/types.js";
 import { getHome } from "../lib/platform.js";
-import { listFiles, safeReadFile, safeStats, safeReadJson } from "../lib/fs-utils.js";
+import { listFiles, safeReadFile, safeStats } from "../lib/fs-utils.js";
 
 // Aider stores chat history in:
 // <project>/.aider.chat.history.md  (markdown format)

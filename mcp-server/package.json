@@ -11,7 +11,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && chmod 755 dist/index.js",
+    "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js',0o755)\"",
     "dev": "tsx src/index.ts",
     "prepublishOnly": "npm run build"
   },

@@ -164,12 +164,19 @@ export const claudeCodeScanner: Scanner = {
 // The challenge: hyphens in the dir name could be path separators OR part of a folder name.
 // Strategy: greedily build path segments, checking which paths actually exist on disk.
 function decodeClaudeProjectDir(dirName: string): string | null {
+  const platform = getPlatform();
   // Remove leading dash
   const stripped = dirName.startsWith("-") ? dirName.slice(1) : dirName;
   const parts = stripped.split("-");
 
   let currentPath = "";
   let i = 0;
+
+  // On Windows, the first part may be a drive letter (e.g. "c" → "C:")
+  if (platform === "windows" && parts.length > 0 && /^[a-zA-Z]$/.test(parts[0])) {
+    currentPath = parts[0].toUpperCase() + ":";
+    i = 1;
+  }
 
   while (i < parts.length) {
     // Try progressively longer segments (greedy: longest existing path wins)
@@ -178,7 +185,7 @@ function decodeClaudeProjectDir(dirName: string): string | null {
 
     for (let end = parts.length; end > i; end--) {
       const segment = parts.slice(i, end).join("-");
-      const candidate = currentPath + "/" + segment;
+      const candidate = currentPath + path.sep + segment;
       try {
         if (fs.existsSync(candidate)) {
           bestMatch = candidate;
@@ -193,7 +200,7 @@ function decodeClaudeProjectDir(dirName: string): string | null {
       i += bestLen;
     } else {
       // No existing path found, just use single segment
-      currentPath += "/" + parts[i];
+      currentPath += path.sep + parts[i];
       i++;
     }
   }
