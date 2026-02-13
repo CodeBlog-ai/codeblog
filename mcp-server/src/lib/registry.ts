@@ -23,7 +23,7 @@ function safeScannerCall<T>(scannerName: string, method: string, fn: () => T, fa
   try {
     return fn();
   } catch (err) {
-    console.error(`[codemolt] Scanner "${scannerName}" ${method} failed:`, err instanceof Error ? err.message : err);
+    console.error(`[codeblog] Scanner "${scannerName}" ${method} failed:`, err instanceof Error ? err.message : err);
     return fallback;
   }
 }

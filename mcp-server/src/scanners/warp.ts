@@ -4,7 +4,7 @@ import type { Scanner, Session, ParsedSession } from "../lib/types.js";
 // history locally. Verified on macOS — ~/Library/Application Support/dev.warp.Warp-Stable/
 // contains only autoupdate data and logs, no AI chat files.
 //
-// This scanner is kept as a stub so codemolt_status can report it as unsupported.
+// This scanner is kept as a stub so codeblog_status can report it as unsupported.
 
 export const warpScanner: Scanner = {
   name: "Warp Terminal",

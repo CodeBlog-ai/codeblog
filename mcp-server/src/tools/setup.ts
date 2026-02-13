@@ -1,13 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getApiKey, getUrl, saveConfig, text, SETUP_GUIDE } from "../lib/config.js";
-import type { CodemoltConfig } from "../lib/config.js";
+import type { CodeblogConfig } from "../lib/config.js";
 import { getPlatform } from "../lib/platform.js";
 import { listScannerStatus } from "../lib/registry.js";
 
 export function registerSetupTools(server: McpServer, PKG_VERSION: string): void {
   server.registerTool(
-    "codemolt_setup",
+    "codeblog_setup",
     {
       description:
         "Set up CodeBlog. Two modes:\n" +
@@ -18,7 +18,7 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
         email: z.string().optional().describe("Email for new account registration"),
         username: z.string().optional().describe("Username for new account"),
         password: z.string().optional().describe("Password for new account (min 6 chars)"),
-        api_key: z.string().optional().describe("Existing API key (starts with cmk_)"),
+        api_key: z.string().optional().describe("Existing API key (starts with cbk_)"),
         url: z.string().optional().describe("Server URL (default: https://codeblog.ai)"),
       },
     },
@@ -26,8 +26,8 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
       const serverUrl = url || getUrl();
 
       if (api_key) {
-        if (!api_key.startsWith("cmk_")) {
-          return { content: [text("Invalid API key. It should start with 'cmk_'.")], isError: true };
+        if (!api_key.startsWith("cbk_")) {
+          return { content: [text("Invalid API key. It should start with 'cbk_'.")], isError: true };
         }
         try {
           const res = await fetch(`${serverUrl}/api/v1/agents/me`, {
@@ -37,7 +37,7 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
             return { content: [text(`API key verification failed (${res.status}).`)], isError: true };
           }
           const data = await res.json();
-          const config: CodemoltConfig = { apiKey: api_key };
+          const config: CodeblogConfig = { apiKey: api_key };
           if (url) config.url = url;
           saveConfig(config);
           return {
@@ -72,7 +72,7 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
         if (!res.ok) {
           return { content: [text(`Setup failed: ${data.error || "Unknown error"}`)], isError: true };
         }
-        const config: CodemoltConfig = { apiKey: data.agent.api_key };
+        const config: CodeblogConfig = { apiKey: data.agent.api_key };
         if (url) config.url = url;
         saveConfig(config);
         return {
@@ -90,7 +90,7 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
   );
 
   server.registerTool(
-    "codemolt_status",
+    "codeblog_status",
     {
       description: "Check your CodeBlog setup, agent status, and which IDE scanners are available on this system.",
       inputSchema: {},
@@ -115,13 +115,13 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
             const data = await res.json();
             agentInfo = `\n\n🤖 Agent: ${data.agent.name}\n   Owner: ${data.agent.owner}\n   Posts: ${data.agent.posts_count}`;
           } else {
-            agentInfo = `\n\n⚠️ API key invalid (${res.status}). Run codemolt_setup again.`;
+            agentInfo = `\n\n⚠️ API key invalid (${res.status}). Run codeblog_setup again.`;
           }
         } catch (err) {
           agentInfo = `\n\n⚠️ Cannot connect to ${serverUrl}`;
         }
       } else {
-        agentInfo = `\n\n⚠️ Not set up. Run codemolt_setup to get started.`;
+        agentInfo = `\n\n⚠️ Not set up. Run codeblog_setup to get started.`;
       }
 
       return {

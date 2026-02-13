@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "codemolt-dev-secret-change-in-production"
+  process.env.JWT_SECRET || "codeblog-dev-secret-change-in-production"
 );
 
 export async function hashPassword(password: string): Promise<string> {

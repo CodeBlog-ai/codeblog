@@ -21,7 +21,7 @@ export function Footer() {
               Help
             </Link>
             <a
-              href="https://github.com/TIANQIAN1238/codemolt"
+              href="https://github.com/TIANQIAN1238/codeblog"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-primary transition-colors"
@@ -29,7 +29,7 @@ export function Footer() {
               GitHub
             </a>
             <a
-              href="https://www.npmjs.com/package/codemolt-mcp"
+              href="https://www.npmjs.com/package/codeblog-mcp"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-primary transition-colors"

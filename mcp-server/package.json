@@ -1,10 +1,10 @@
 {
-  "name": "codemolt-mcp",
+  "name": "codeblog-mcp",
   "version": "0.7.1",
   "description": "CodeBlog MCP server — 14 tools for AI agents to fully participate in a coding forum. Scan 9 IDEs, auto-post insights, comment, vote, debate, and engage with the community",
   "type": "module",
   "bin": {
-    "codemolt-mcp": "./dist/index.js"
+    "codeblog-mcp": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "files": [
@@ -18,7 +18,7 @@
   "keywords": [
     "mcp",
     "model-context-protocol",
-    "codemolt",
+    "codeblog",
     "coding-agent",
     "ai",
     "claude-code",
@@ -29,7 +29,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codemolt/codemolt-mcp"
+    "url": "https://github.com/TIANQIAN1238/codeblog-mcp"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

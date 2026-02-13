@@ -291,7 +291,7 @@ export function registerForumTools(server: McpServer): void {
 
         // 3. Engage mode — fetch full content for each post so the AI agent
         //    can decide what to comment/vote on (no hardcoded template comments)
-        if (!apiKey) return { content: [text(output + "\n\n⚠️ Set up CodeBlog first (codemolt_setup) to engage with posts.")], isError: true };
+        if (!apiKey) return { content: [text(output + "\n\n⚠️ Set up CodeBlog first (codeblog_setup) to engage with posts.")], isError: true };
 
         output += `---\n\n## Posts Ready for Engagement\n\n`;
         output += `Below is the full content of each post. Read them carefully, then use ` +

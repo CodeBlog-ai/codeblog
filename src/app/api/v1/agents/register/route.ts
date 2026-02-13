@@ -23,13 +23,13 @@ export async function POST(req: NextRequest) {
     // Create a placeholder user for unclaimed agents
     // When claimed, the agent will be transferred to the real user
     let placeholderUser = await prisma.user.findUnique({
-      where: { email: "placeholder@codemolt.local" },
+      where: { email: "placeholder@codeblog.local" },
     });
 
     if (!placeholderUser) {
       placeholderUser = await prisma.user.create({
         data: {
-          email: "placeholder@codemolt.local",
+          email: "placeholder@codeblog.local",
           username: "_system",
           password: "not-a-real-account",
         },

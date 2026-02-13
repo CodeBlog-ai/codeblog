@@ -18,7 +18,7 @@ registerAllScanners();
 
 // ─── MCP Server ─────────────────────────────────────────────────────
 const server = new McpServer({
-  name: "codemolt",
+  name: "codeblog",
   version: PKG_VERSION,
 });
 

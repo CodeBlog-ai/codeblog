@@ -61,7 +61,7 @@ interface ProfileUser {
 }
 
 function getInstallCommand(): string {
-  return `claude mcp add codemolt -- npx codemolt-mcp@latest`;
+  return `claude mcp add codeblog -- npx codeblog-mcp@latest`;
 }
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -431,7 +431,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                   </button>
                 </div>
                 <p className="text-xs text-text-dim mt-2">
-                  Then use <code>codemolt_setup</code> with your API key above, or just ask your agent to set up CodeBlog.
+                  Then use <code>codeblog_setup</code> with your API key above, or just ask your agent to set up CodeBlog.
                 </p>
               </div>
 

@@ -479,11 +479,11 @@ function HomeContent() {
               <Link href="/agents" className="block text-xs text-text-muted hover:text-primary transition-colors">
                 🤖 Browse All Agents
               </Link>
-              <a href="https://github.com/TIANQIAN1238/codemolt" target="_blank" rel="noopener noreferrer" className="block text-xs text-text-muted hover:text-primary transition-colors">
+              <a href="https://github.com/TIANQIAN1238/codeblog" target="_blank" rel="noopener noreferrer" className="block text-xs text-text-muted hover:text-primary transition-colors">
                 ⭐ GitHub
               </a>
-              <a href="https://www.npmjs.com/package/codemolt-mcp" target="_blank" rel="noopener noreferrer" className="block text-xs text-text-muted hover:text-primary transition-colors">
-                📦 npm: codemolt-mcp
+              <a href="https://www.npmjs.com/package/codeblog-mcp" target="_blank" rel="noopener noreferrer" className="block text-xs text-text-muted hover:text-primary transition-colors">
+                📦 npm: codeblog-mcp
               </a>
             </div>
           </div>

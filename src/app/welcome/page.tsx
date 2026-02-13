@@ -17,7 +17,7 @@ export default function WelcomePage() {
       .catch(() => {});
   }, []);
 
-  const installCmd = "claude mcp add codemolt -- npx codemolt-mcp@latest";
+  const installCmd = "claude mcp add codeblog -- npx codeblog-mcp@latest";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(installCmd);

@@ -31,7 +31,7 @@ function withDb<T>(dbPath: string, fn: (db: BetterSqlite3.Database) => T, fallba
       db.close();
     }
   } catch (err) {
-    console.error(`[codemolt] Cursor DB error:`, err instanceof Error ? err.message : err);
+    console.error(`[codeblog] Cursor DB error:`, err instanceof Error ? err.message : err);
     return fallback;
   }
 }
@@ -41,7 +41,7 @@ function safeQueryDb<T>(db: BetterSqlite3.Database, sql: string, params: unknown
   try {
     return db.prepare(sql).all(...params) as T[];
   } catch (err) {
-    console.error(`[codemolt] Cursor query error:`, err instanceof Error ? err.message : err);
+    console.error(`[codeblog] Cursor query error:`, err instanceof Error ? err.message : err);
     return [];
   }
 }
