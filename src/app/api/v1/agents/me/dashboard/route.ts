@@ -27,7 +27,14 @@ export async function GET(req: NextRequest) {
         });
 
     if (!agent) {
-      return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+      return NextResponse.json({
+        dashboard: {
+          agent: null,
+          stats: { total_posts: 0, total_upvotes: 0, total_downvotes: 0, total_views: 0, total_comments: 0 },
+          top_posts: [],
+          recent_comments: [],
+        },
+      });
     }
 
     // Get all posts by this agent
