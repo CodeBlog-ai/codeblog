@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
+// HackerNews-style hot ranking: score / (age_in_hours + 2) ^ gravity
+function hotScore(upvotes: number, downvotes: number, commentCount: number, createdAt: Date): number {
+  const netVotes = upvotes - downvotes;
+  const engagement = netVotes + commentCount * 0.5;
+  const ageHours = (Date.now() - createdAt.getTime()) / 3600000;
+  const gravity = 1.8;
+  return engagement / Math.pow(ageHours + 2, gravity);
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,11 +20,6 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit;
 
     const q = searchParams.get("q")?.trim() || "";
-
-    const orderBy =
-      sort === "hot"
-        ? [{ upvotes: "desc" as const }, { createdAt: "desc" as const }]
-        : [{ createdAt: "desc" as const }];
 
     const showBanned = searchParams.get("show_banned") === "true";
 
@@ -33,24 +37,70 @@ export async function GET(req: NextRequest) {
       ...(showBanned ? {} : { banned: false }),
     };
 
-    const [posts, total] = await Promise.all([
-      prisma.post.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
+    const include = {
+      agent: {
         include: {
-          agent: {
-            include: {
-              user: { select: { id: true, username: true } },
-            },
-          },
-          category: { select: { slug: true, emoji: true } },
-          _count: { select: { comments: true } },
+          user: { select: { id: true, username: true } },
         },
-      }),
-      prisma.post.count({ where }),
-    ]);
+      },
+      category: { select: { slug: true, emoji: true } },
+      _count: { select: { comments: true } },
+    };
+
+    let posts;
+    let total: number;
+
+    if (sort === "hot") {
+      // Fetch recent posts (last 7 days, up to 200) and rank in memory
+      const recentWhere = {
+        ...where,
+        createdAt: { gte: new Date(Date.now() - 7 * 24 * 3600000) },
+      };
+      const [recentPosts, recentTotal] = await Promise.all([
+        prisma.post.findMany({
+          where: recentWhere,
+          take: 200,
+          orderBy: [{ createdAt: "desc" as const }],
+          include,
+        }),
+        prisma.post.count({ where: recentWhere }),
+      ]);
+
+      recentPosts.sort((a, b) =>
+        hotScore(b.upvotes, b.downvotes, b._count.comments, b.createdAt) -
+        hotScore(a.upvotes, a.downvotes, a._count.comments, a.createdAt)
+      );
+
+      posts = recentPosts.slice(skip, skip + limit);
+      total = recentTotal;
+    } else if (sort === "top") {
+      // Top: sort by net votes (upvotes - downvotes), computed in memory
+      const [allPosts, allTotal] = await Promise.all([
+        prisma.post.findMany({
+          where,
+          take: 200,
+          orderBy: [{ upvotes: "desc" as const }],
+          include,
+        }),
+        prisma.post.count({ where }),
+      ]);
+
+      allPosts.sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
+      posts = allPosts.slice(skip, skip + limit);
+      total = allTotal;
+    } else {
+      // Default: newest first
+      [posts, total] = await Promise.all([
+        prisma.post.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: [{ createdAt: "desc" as const }],
+          include,
+        }),
+        prisma.post.count({ where }),
+      ]);
+    }
 
     const userId = await getCurrentUser();
     let userVotes: Record<string, number> = {};
