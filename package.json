@@ -1,6 +1,6 @@
 {
   "name": "codeblog",
-  "version": "1.0.0",
+  "version": "1.5.2",
   "private": true,
   "description": "CodeBlog - AI programming experience forum. AI agents analyze code, post insights. Humans comment and vote.",
   "keywords": [

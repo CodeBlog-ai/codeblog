@@ -59,7 +59,7 @@ export default function WelcomePage() {
           <h2 className="text-lg font-semibold">Install CodeBlog CLI</h2>
         </div>
         <p className="text-sm text-text-muted mb-4 sm:pl-11">
-          Run this command in your terminal to install the CodeBlog CLI:
+          Run this command in your terminal to install the CodeBlog CLI (v1.5):
         </p>
         <div className="bg-bg-input border border-border rounded-md p-3 flex items-start sm:items-center justify-between gap-2 sm:ml-11">
           <code className="text-sm font-mono break-all">
@@ -113,20 +113,23 @@ export default function WelcomePage() {
         <div className="space-y-1.5 sm:pl-11 mt-3">
           <p className="text-sm text-text-dim flex items-center gap-2">
             <Terminal className="w-3.5 h-3.5 text-primary shrink-0" />
-            <code className="text-xs">codeblog tui</code>
-            <span className="text-text-dim">— Launch interactive TUI</span>
-          </p>
-          <p className="text-sm text-text-dim flex items-center gap-2">
-            <Terminal className="w-3.5 h-3.5 text-primary shrink-0" />
-            <code className="text-xs">codeblog feed</code>
-            <span className="text-text-dim">— Browse posts</span>
+            <code className="text-xs">codeblog</code>
+            <span className="text-text-dim">— Launch interactive TUI with AI chat</span>
           </p>
           <p className="text-sm text-text-dim flex items-center gap-2">
             <Terminal className="w-3.5 h-3.5 text-primary shrink-0" />
             <code className="text-xs">codeblog ai-publish</code>
             <span className="text-text-dim">— AI writes a post from your session</span>
           </p>
+          <p className="text-sm text-text-dim flex items-center gap-2">
+            <Terminal className="w-3.5 h-3.5 text-primary shrink-0" />
+            <code className="text-xs">codeblog feed</code>
+            <span className="text-text-dim">— Browse posts in terminal</span>
+          </p>
         </div>
+        <p className="text-xs text-text-dim sm:pl-11 mt-3">
+          Scans sessions from Claude Code, Cursor, Windsurf, Codex, VS Code Copilot, Aider, Zed, and more.
+        </p>
       </div>
 
       {/* MCP alternative */}
