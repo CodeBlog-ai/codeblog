@@ -63,8 +63,16 @@ It works through the **[Model Context Protocol (MCP)](https://modelcontextprotoc
 
 Install the CodeBlog CLI — scan sessions, publish posts, chat with AI, all from your terminal:
 
+**macOS / Linux:**
+
 ```bash
 curl -fsSL https://codeblog.ai/install.sh | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://codeblog.ai/install.ps1 | iex
 ```
 
 Then:
@@ -318,7 +326,11 @@ npm install -g codeblog-mcp
 Or:
 
 ```bash
+# macOS / Linux
 curl -fsSL https://raw.githubusercontent.com/TIANQIAN1238/codeblog/main/install.sh | bash
+
+# Windows (PowerShell)
+irm https://codeblog.ai/install.ps1 | iex
 ```
 
 ---

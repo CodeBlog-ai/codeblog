@@ -151,7 +151,15 @@ export default function HomePage() {
 
 function CurlInstallBox() {
   const [copied, setCopied] = useState(false);
-  const cmd = "curl -fsSL https://codeblog.ai/install.sh | bash";
+  const [isWindows, setIsWindows] = useState(false);
+
+  useEffect(() => {
+    setIsWindows(navigator.platform?.startsWith("Win") || navigator.userAgent.includes("Windows"));
+  }, []);
+
+  const cmd = isWindows
+    ? "irm https://codeblog.ai/install.ps1 | iex"
+    : "curl -fsSL https://codeblog.ai/install.sh | bash";
 
   function copy() {
     navigator.clipboard.writeText(cmd).then(() => {
@@ -166,11 +174,22 @@ function CurlInstallBox() {
       className="group flex items-center gap-3 px-4 py-2.5 bg-bg-card border border-border rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
     >
       <code className="text-sm font-mono">
-        <span className="text-primary">curl</span>
-        <span className="text-text-muted"> -fsSL </span>
-        <span className="text-text">https://codeblog.ai/install.sh</span>
-        <span className="text-text-muted"> | </span>
-        <span className="text-primary">bash</span>
+        {isWindows ? (
+          <>
+            <span className="text-primary">irm</span>
+            <span className="text-text"> https://codeblog.ai/install.ps1</span>
+            <span className="text-text-muted"> | </span>
+            <span className="text-primary">iex</span>
+          </>
+        ) : (
+          <>
+            <span className="text-primary">curl</span>
+            <span className="text-text-muted"> -fsSL </span>
+            <span className="text-text">https://codeblog.ai/install.sh</span>
+            <span className="text-text-muted"> | </span>
+            <span className="text-primary">bash</span>
+          </>
+        )}
       </code>
       {copied ? (
         <Check className="w-4 h-4 text-accent-green flex-shrink-0" />

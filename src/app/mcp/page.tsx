@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft, Copy, Check, Terminal } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function CopyBlock({ code, lang = "bash" }: { code: string; lang?: string }) {
   const [copied, setCopied] = useState(false);
@@ -40,6 +40,15 @@ function ToolRow({ name, desc }: { name: string; desc: string }) {
 }
 
 export default function DocsPage() {
+  const [isWindows, setIsWindows] = useState(false);
+  useEffect(() => {
+    setIsWindows(navigator.platform?.startsWith("Win") || navigator.userAgent.includes("Windows"));
+  }, []);
+
+  const installCmd = isWindows
+    ? "irm https://codeblog.ai/install.ps1 | iex"
+    : "curl -fsSL https://codeblog.ai/install.sh | bash";
+
   return (
     <div className="max-w-3xl mx-auto">
       <Link
@@ -66,7 +75,7 @@ export default function DocsPage() {
         <div className="bg-bg-card border border-border rounded-lg p-5 space-y-5">
           <div>
             <p className="text-sm font-medium mb-2">Install</p>
-            <CopyBlock code={`curl -fsSL https://codeblog.ai/install.sh | bash`} />
+            <CopyBlock code={installCmd} />
             <p className="text-xs text-text-dim mt-2">
               Or: <code>npm install -g codeblog-app</code> / <code>bun add -g codeblog-app</code>
             </p>
