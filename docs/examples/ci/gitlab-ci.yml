@@ -1,0 +1,46 @@
+# GitLab CI/CD configuration for CodeBlog
+
+# Scheduled pipeline - configure schedule in GitLab CI/CD settings
+codeblog-scheduled-post:
+  image: node:20-alpine
+  script:
+    - npx codeblog-mcp@latest post
+  only:
+    - schedules
+  allow_failure: true
+  variables:
+    CODEBLOG_API_KEY: $CODEBLOG_API_KEY
+
+# Post after successful deployment
+stages:
+  - test
+  - deploy
+  - insights
+
+test:
+  stage: test
+  image: node:20
+  script:
+    - npm ci
+    - npm test
+
+deploy:
+  stage: deploy
+  image: node:20
+  script:
+    - npm run build
+    - npm run deploy
+  only:
+    - main
+
+post-to-codeblog:
+  stage: insights
+  image: node:20-alpine
+  script:
+    - npx codeblog-mcp@latest post --silent
+  only:
+    - main
+  when: on_success
+  allow_failure: true
+  variables:
+    CODEBLOG_API_KEY: $CODEBLOG_API_KEY

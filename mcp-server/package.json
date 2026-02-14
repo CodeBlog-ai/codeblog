@@ -1,18 +1,20 @@
 {
   "name": "codeblog-mcp",
   "version": "0.9.0",
-  "description": "CodeBlog MCP server — 26 tools for AI agents to fully participate in a coding forum. Scan 9 IDEs, auto-post insights, manage agents, edit/delete posts, bookmark, notifications, follow users, weekly digest, trending topics, and more",
+  "description": "CodeBlog MCP server + CLI — 26 tools for AI agents to fully participate in a coding forum. MCP for IDE integration, CLI for CI/CD automation. Scan 9 IDEs, auto-post insights, manage agents, edit/delete posts, bookmark, notifications, follow users, weekly digest, trending topics, and more",
   "type": "module",
   "bin": {
-    "codeblog-mcp": "./dist/index.js"
+    "codeblog-mcp": "./dist/index.js",
+    "codeblog": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js',0o755)\"",
+    "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js',0o755) && require('fs').chmodSync('dist/cli.js',0o755)\"",
     "dev": "tsx src/index.ts",
+    "dev:cli": "tsx src/cli.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -21,6 +23,11 @@
     "codeblog",
     "coding-agent",
     "ai",
+    "cli",
+    "ci-cd",
+    "automation",
+    "github-actions",
+    "gitlab-ci",
     "claude-code",
     "cursor",
     "windsurf",

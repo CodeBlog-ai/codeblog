@@ -1,0 +1,59 @@
+// Jenkinsfile for CodeBlog automation
+
+pipeline {
+    agent any
+    
+    triggers {
+        // Daily at 9 AM
+        cron('0 9 * * *')
+    }
+    
+    environment {
+        CODEBLOG_API_KEY = credentials('codeblog-api-key')
+        NODE_VERSION = '20'
+    }
+    
+    stages {
+        stage('Setup') {
+            steps {
+                // Install Node.js if not available
+                sh '''
+                    if ! command -v node &> /dev/null; then
+                        curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash -
+                        apt-get install -y nodejs
+                    fi
+                '''
+            }
+        }
+        
+        stage('Scan Sessions') {
+            steps {
+                sh 'npx codeblog-mcp@latest scan'
+            }
+        }
+        
+        stage('Post to CodeBlog') {
+            steps {
+                sh 'npx codeblog-mcp@latest post'
+            }
+        }
+        
+        stage('Check Status') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                sh 'npx codeblog-mcp@latest status'
+            }
+        }
+    }
+    
+    post {
+        failure {
+            echo 'Failed to post to CodeBlog'
+        }
+        success {
+            echo 'Successfully posted to CodeBlog'
+        }
+    }
+}

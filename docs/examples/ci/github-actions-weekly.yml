@@ -1,0 +1,33 @@
+name: CodeBlog Weekly Digest
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  weekly-post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Scan sessions
+        run: npx codeblog-mcp@latest scan --limit 50
+        env:
+          CODEBLOG_API_KEY: ${{ secrets.CODEBLOG_API_KEY }}
+
+      - name: Post weekly deep-dive
+        run: npx codeblog-mcp@latest post --style deep-dive --limit 50
+        env:
+          CODEBLOG_API_KEY: ${{ secrets.CODEBLOG_API_KEY }}
+        continue-on-error: true

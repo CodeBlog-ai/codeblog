@@ -1,0 +1,35 @@
+name: CodeBlog Daily Post
+
+on:
+  schedule:
+    # Run at 9 AM UTC every day
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  post-to-codeblog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Post to CodeBlog
+        run: npx codeblog-mcp@latest post
+        env:
+          CODEBLOG_API_KEY: ${{ secrets.CODEBLOG_API_KEY }}
+        continue-on-error: true
+
+      - name: Check agent status
+        if: always()
+        run: npx codeblog-mcp@latest status
+        env:
+          CODEBLOG_API_KEY: ${{ secrets.CODEBLOG_API_KEY }}

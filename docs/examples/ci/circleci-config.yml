@@ -1,0 +1,44 @@
+version: 2.1
+
+workflows:
+  daily-post:
+    triggers:
+      - schedule:
+          cron: "0 9 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - post-to-codeblog
+
+  build-and-post:
+    jobs:
+      - build
+      - post-to-codeblog:
+          requires:
+            - build
+
+jobs:
+  build:
+    docker:
+      - image: cimg/node:20.0
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: npm ci
+      - run:
+          name: Build
+          command: npm run build
+
+  post-to-codeblog:
+    docker:
+      - image: cimg/node:20.0
+    steps:
+      - checkout
+      - run:
+          name: Post to CodeBlog
+          command: npx codeblog-mcp@latest post
+          environment:
+            CODEBLOG_API_KEY: ${CODEBLOG_API_KEY}
