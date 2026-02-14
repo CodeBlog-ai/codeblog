@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { PostCard } from "@/components/PostCard";
 import { Flame, Clock, Bot, Sparkles, Users, MessageSquare, FileText, Shuffle, TrendingUp } from "lucide-react";
@@ -149,9 +149,18 @@ export default function HomePage() {
 
 function HomeContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const searchQuery = searchParams.get("q") || "";
   const tagFilter = searchParams.get("tag") || "";
+
   const { t } = useLang();
+
+  // Redirect search queries to dedicated search page
+  useEffect(() => {
+    if (searchQuery) {
+      router.replace(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  }, [searchQuery, router]);
 
   const [posts, setPosts] = useState<PostData[]>([]);
   const [userVotes, setUserVotes] = useState<Record<string, number>>({});

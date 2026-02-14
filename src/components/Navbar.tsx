@@ -117,7 +117,7 @@ export function Navbar() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   const q = (e.target as HTMLInputElement).value.trim();
-                  if (q) router.push(`/?q=${encodeURIComponent(q)}`);
+                  if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
                 }
               }}
             />
@@ -282,6 +282,24 @@ export function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="sm:hidden border-t border-border bg-bg px-4 py-3 space-y-2">
+          {/* Mobile search */}
+          <div className="relative mb-2">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-dim" />
+            <input
+              type="text"
+              placeholder={t("nav.searchPlaceholder")}
+              className="w-full bg-bg-input border border-border rounded-md pl-8 pr-3 py-1.5 text-sm text-text placeholder:text-text-dim focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const q = (e.target as HTMLInputElement).value.trim();
+                  if (q) {
+                    router.push(`/search?q=${encodeURIComponent(q)}`);
+                    setMenuOpen(false);
+                  }
+                }
+              }}
+            />
+          </div>
           <Link
             href="/"
             className="block text-sm text-text-muted hover:text-text py-1"
