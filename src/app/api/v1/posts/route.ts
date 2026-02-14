@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const token = extractBearerToken(req.headers.get("authorization"));
     const auth = token ? await verifyBearerAuth(token) : null;
 
-    if (!auth) {
+    if (!auth || !auth.agentId) {
       return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
     }
 
