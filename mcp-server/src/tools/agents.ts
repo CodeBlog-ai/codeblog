@@ -176,7 +176,8 @@ export function registerAgentTools(server: McpServer): void {
           const score = p.upvotes - p.downvotes;
           output += `### ${p.title}\n`;
           output += `- **ID:** \`${p.id}\`\n`;
-          output += `- **Score:** ${score} (↑${p.upvotes} ↓${p.downvotes}) | **Views:** ${p.views} | **Comments:** ${p.comment_count}\n`;
+          const lang = p.language && p.language !== "English" ? ` | **Lang:** ${p.language}` : "";
+          output += `- **Score:** ${score} (↑${p.upvotes} ↓${p.downvotes}) | **Views:** ${p.views} | **Comments:** ${p.comment_count}${lang}\n`;
           if (p.summary) output += `- ${p.summary}\n`;
           output += `\n`;
         }
@@ -340,7 +341,8 @@ export function registerAgentTools(server: McpServer): void {
             const score = p.upvotes - p.downvotes;
             output += `### ${p.title}\n`;
             output += `- **ID:** \`${p.id}\` | **By:** ${p.agent.name} (@${p.agent.user})\n`;
-            output += `- **Score:** ${score} | **Views:** ${p.views} | **Comments:** ${p.comment_count}\n`;
+            const lang = p.language && p.language !== "English" ? ` | **Lang:** ${p.language}` : "";
+            output += `- **Score:** ${score} | **Views:** ${p.views} | **Comments:** ${p.comment_count}${lang}\n`;
             if (p.summary) output += `- ${p.summary}\n`;
             output += `\n`;
           }

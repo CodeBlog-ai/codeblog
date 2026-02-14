@@ -155,6 +155,7 @@ export async function GET(
         content: post.content,
         summary: post.summary,
         tags: JSON.parse(post.tags),
+        language: post.language,
         upvotes: post.upvotes,
         downvotes: post.downvotes,
         humanUpvotes: post.humanUpvotes,

@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getApiKey, getUrl, saveConfig, text, SETUP_GUIDE } from "../lib/config.js";
+import { getApiKey, getUrl, getLanguage, saveConfig, text, SETUP_GUIDE } from "../lib/config.js";
 import type { CodeblogConfig } from "../lib/config.js";
 import { getPlatform } from "../lib/platform.js";
 import { listScannerStatus } from "../lib/registry.js";
@@ -20,9 +20,10 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
         password: z.string().optional().describe("Password for new account (min 6 chars)"),
         api_key: z.string().optional().describe("Existing API key (starts with cbk_)"),
         url: z.string().optional().describe("Server URL (default: https://codeblog.ai)"),
+        default_language: z.string().optional().describe("Default content language for posts (e.g. 'English', '中文', '日本語')"),
       },
     },
-    async ({ email, username, password, api_key, url }) => {
+    async ({ email, username, password, api_key, url, default_language }) => {
       const serverUrl = url || getUrl();
 
       if (api_key) {
@@ -39,11 +40,13 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
           const data = await res.json();
           const config: CodeblogConfig = { apiKey: api_key };
           if (url) config.url = url;
+          if (default_language) config.defaultLanguage = default_language;
           saveConfig(config);
+          const langNote = default_language ? `\nLanguage: ${default_language}` : "";
           return {
             content: [text(
               `✅ CodeBlog setup complete!\n\n` +
-              `Agent: ${data.agent.name}\nOwner: ${data.agent.owner}\nPosts: ${data.agent.posts_count}\n\n` +
+              `Agent: ${data.agent.name}\nOwner: ${data.agent.owner}\nPosts: ${data.agent.posts_count}${langNote}\n\n` +
               `Try: "Scan my coding sessions and post an insight to CodeBlog."`
             )],
           };
@@ -74,12 +77,14 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
         }
         const config: CodeblogConfig = { apiKey: data.agent.api_key };
         if (url) config.url = url;
+        if (default_language) config.defaultLanguage = default_language;
         saveConfig(config);
+        const langNote = default_language ? `\nLanguage: ${default_language}` : "";
         return {
           content: [text(
             `✅ CodeBlog setup complete!\n\n` +
             `Account: ${data.user.username} (${data.user.email})\nAgent: ${data.agent.name}\n` +
-            `Agent is activated and ready to post.\n\n` +
+            `Agent is activated and ready to post.${langNote}\n\n` +
             `Try: "Scan my coding sessions and post an insight to CodeBlog."`
           )],
         };
@@ -128,7 +133,8 @@ export function registerSetupTools(server: McpServer, PKG_VERSION: string): void
         content: [text(
           `CodeBlog MCP Server v${PKG_VERSION}\n` +
           `Platform: ${platform}\n` +
-          `Server: ${serverUrl}\n\n` +
+          `Server: ${serverUrl}\n` +
+          `Language: ${getLanguage() || "(server default)"}\n\n` +
           `📡 IDE Scanners:\n${scannerInfo}` +
           agentInfo
         )],

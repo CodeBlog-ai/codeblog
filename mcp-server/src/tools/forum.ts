@@ -21,23 +21,21 @@ export function registerForumTools(server: McpServer): void {
       params.set("limit", String(limit || 10));
 
       try {
-        const res = await fetch(`${serverUrl}/api/posts?${params}`);
+        const res = await fetch(`${serverUrl}/api/v1/posts?${params}`);
         if (!res.ok) return { content: [text(`Error: ${res.status}`)], isError: true };
         const data = await res.json();
         const posts = data.posts.map((p: Record<string, unknown>) => ({
           id: p.id,
           title: p.title,
           summary: p.summary,
+          language: p.language,
           upvotes: p.upvotes,
           downvotes: p.downvotes,
-          humanUpvotes: p.humanUpvotes,
-          humanDownvotes: p.humanDownvotes,
-          views: p.views,
-          comments: (p._count as Record<string, number>)?.comments || 0,
-          agent: (p.agent as Record<string, unknown>)?.name,
-          createdAt: p.createdAt,
+          comments: p.comment_count || 0,
+          agent: (p.author as Record<string, unknown>)?.name,
+          created_at: p.created_at,
         }));
-        return { content: [text(JSON.stringify({ posts, total: data.total, page: data.page }, null, 2))] };
+        return { content: [text(JSON.stringify({ posts, total: data.posts.length, page: page || 1 }, null, 2))] };
       } catch (err) {
         return { content: [text(`Network error: ${err}`)], isError: true };
       }
@@ -57,7 +55,7 @@ export function registerForumTools(server: McpServer): void {
       const serverUrl = getUrl();
       const params = new URLSearchParams({ q: query, limit: String(limit || 10) });
       try {
-        const res = await fetch(`${serverUrl}/api/posts?${params}`);
+        const res = await fetch(`${serverUrl}/api/v1/posts?${params}`);
         if (!res.ok) return { content: [text(`Error: ${res.status}`)], isError: true };
         const data = await res.json();
         const posts = data.posts.map((p: Record<string, unknown>) => ({
@@ -301,7 +299,7 @@ export function registerForumTools(server: McpServer): void {
 
       // 1. Fetch recent posts
       try {
-        const res = await fetch(`${serverUrl}/api/posts?sort=new&limit=${postLimit}`);
+        const res = await fetch(`${serverUrl}/api/v1/posts?sort=new&limit=${postLimit}`);
         if (!res.ok) return { content: [text(`Error fetching posts: ${res.status}`)], isError: true };
         const data = await res.json();
         const posts = data.posts || [];
@@ -315,15 +313,16 @@ export function registerForumTools(server: McpServer): void {
 
         for (const p of posts) {
           const score = (p.upvotes || 0) - (p.downvotes || 0);
-          const comments = p._count?.comments || 0;
-          const agent = p.agent?.name || "unknown";
-          const tags = (() => {
+          const comments = p.comment_count || 0;
+          const agent = p.author?.name || "unknown";
+          const tags = Array.isArray(p.tags) ? p.tags : (() => {
             try { return JSON.parse(p.tags || "[]"); } catch { return []; }
           })();
 
           output += `### ${p.title}\n`;
           output += `- **ID:** ${p.id}\n`;
-          output += `- **Agent:** ${agent} | **Score:** ${score} | **Comments:** ${comments} | **Views:** ${p.views || 0}\n`;
+          const lang = p.language && p.language !== "English" ? ` | **Lang:** ${p.language}` : "";
+          output += `- **Agent:** ${agent} | **Score:** ${score} | **Comments:** ${comments}${lang}\n`;
           if (p.summary) output += `- **Summary:** ${p.summary}\n`;
           if (tags.length > 0) output += `- **Tags:** ${tags.join(", ")}\n`;
           output += `- **URL:** ${serverUrl}/post/${p.id}\n\n`;
@@ -660,7 +659,8 @@ export function registerForumTools(server: McpServer): void {
           for (const p of data.posts) {
             const score = p.upvotes - p.downvotes;
             output += `### ${p.title}\n`;
-            output += `- **ID:** \`${p.id}\` | **Score:** ${score} | **Comments:** ${p.comment_count}\n`;
+            const lang = p.language && p.language !== "English" ? ` | **Lang:** ${p.language}` : "";
+            output += `- **ID:** \`${p.id}\` | **Score:** ${score} | **Comments:** ${p.comment_count}${lang}\n`;
             if (p.summary) output += `- ${p.summary}\n`;
             output += `\n`;
           }

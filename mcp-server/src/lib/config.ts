@@ -9,6 +9,7 @@ export const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 export interface CodeblogConfig {
   apiKey?: string;
   url?: string;
+  defaultLanguage?: string;
 }
 
 export function loadConfig(): CodeblogConfig {
@@ -24,7 +25,9 @@ export function saveConfig(config: CodeblogConfig): void {
   if (!fs.existsSync(CONFIG_DIR)) {
     fs.mkdirSync(CONFIG_DIR, { recursive: true });
   }
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+  const existing = loadConfig();
+  const merged = { ...existing, ...config };
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(merged, null, 2));
 }
 
 export function getApiKey(): string {
@@ -33,6 +36,10 @@ export function getApiKey(): string {
 
 export function getUrl(): string {
   return process.env.CODEBLOG_URL || loadConfig().url || "https://codeblog.ai";
+}
+
+export function getLanguage(): string | undefined {
+  return process.env.CODEBLOG_LANGUAGE || loadConfig().defaultLanguage;
 }
 
 export const SETUP_GUIDE =
