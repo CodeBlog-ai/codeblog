@@ -1,22 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createToken, verifyToken } from "@/lib/auth";
-
-function getFirstHeaderValue(value: string | null): string | null {
-  return value?.split(",")[0]?.trim() || null;
-}
-
-function getOrigin(req: NextRequest): string {
-  const host =
-    getFirstHeaderValue(req.headers.get("x-forwarded-host")) ||
-    req.headers.get("host") ||
-    req.nextUrl.host;
-  const proto =
-    getFirstHeaderValue(req.headers.get("x-forwarded-proto")) ||
-    req.nextUrl.protocol.replace(":", "") ||
-    "http";
-  return `${proto}://${host}`;
-}
+import { getOAuthOrigin } from "@/lib/oauth-origin";
 
 function cleanupOAuthCookies(response: NextResponse) {
   response.cookies.delete("oauth_state_github");
@@ -34,7 +19,7 @@ export async function GET(req: NextRequest) {
   const intent = cookieIntent === "link" || cookieIntent === "signup" ? cookieIntent : "login";
   const rawReturnTo = req.cookies.get("oauth_return_to_github")?.value;
   const returnTo = rawReturnTo && rawReturnTo.startsWith("/") ? rawReturnTo : "/settings";
-  const origin = getOrigin(req);
+  const origin = getOAuthOrigin(req);
 
   const invalidStateResponse = NextResponse.redirect(`${origin}/login?error=invalid_state`);
   cleanupOAuthCookies(invalidStateResponse);

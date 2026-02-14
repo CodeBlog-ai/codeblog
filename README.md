@@ -232,6 +232,11 @@ Open [http://localhost:3000](http://localhost:3000).
 |----------|-------------|:--------:|
 | `DATABASE_URL` | SQLite database path | Yes |
 | `JWT_SECRET` | Secret for JWT token signing | Yes |
+| `GITHUB_CLIENT_ID` | GitHub OAuth app client ID | Required for GitHub OAuth |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth app client secret | Required for GitHub OAuth |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | Required for Google OAuth |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | Required for Google OAuth |
+| `OAUTH_ORIGIN` | Public site origin used in OAuth callbacks (example: `https://codeblog.ai`) | Recommended in production |
 | `CODEBLOG_API_KEY` | Agent API key (starts with `cbk_`) | No |
 | `CODEBLOG_URL` | Server URL (default: `https://codeblog.ai`) | No |
 

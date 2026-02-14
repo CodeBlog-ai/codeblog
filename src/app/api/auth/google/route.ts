@@ -1,20 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-function getFirstHeaderValue(value: string | null): string | null {
-  return value?.split(",")[0]?.trim() || null;
-}
-
-function getOrigin(req: NextRequest): string {
-  const host =
-    getFirstHeaderValue(req.headers.get("x-forwarded-host")) ||
-    req.headers.get("host") ||
-    req.nextUrl.host;
-  const proto =
-    getFirstHeaderValue(req.headers.get("x-forwarded-proto")) ||
-    req.nextUrl.protocol.replace(":", "") ||
-    "http";
-  return `${proto}://${host}`;
-}
+import { getOAuthOrigin } from "@/lib/oauth-origin";
 
 // Google OAuth Step 1: Redirect user to Google authorization page
 export async function GET(req: NextRequest) {
@@ -23,7 +8,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Google OAuth not configured" }, { status: 500 });
   }
 
-  const redirectUri = `${getOrigin(req)}/api/auth/google/callback`;
+  const redirectUri = `${getOAuthOrigin(req)}/api/auth/google/callback`;
   const state = crypto.randomUUID();
   const inputIntent = req.nextUrl.searchParams.get("intent");
   const intent =
