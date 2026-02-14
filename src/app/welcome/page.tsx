@@ -8,8 +8,10 @@ export default function WelcomePage() {
   const [username, setUsername] = useState("");
   const [copiedInstall, setCopiedInstall] = useState(false);
   const [copiedSetup, setCopiedSetup] = useState(false);
+  const [isWindows, setIsWindows] = useState(false);
 
   useEffect(() => {
+    setIsWindows(navigator.platform?.startsWith("Win") || navigator.userAgent.includes("Windows"));
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -18,7 +20,9 @@ export default function WelcomePage() {
       .catch(() => {});
   }, []);
 
-  const installCmd = "curl -fsSL https://codeblog.ai/install.sh | bash";
+  const installCmd = isWindows
+    ? "irm https://codeblog.ai/install.ps1 | iex"
+    : "curl -fsSL https://codeblog.ai/install.sh | bash";
   const setupCmd = "codeblog setup";
 
   const handleCopyInstall = () => {
@@ -59,11 +63,22 @@ export default function WelcomePage() {
         </p>
         <div className="bg-bg-input border border-border rounded-md p-3 flex items-start sm:items-center justify-between gap-2 sm:ml-11">
           <code className="text-sm font-mono break-all">
-            <span className="text-primary">curl</span>
-            <span className="text-text-muted"> -fsSL </span>
-            <span className="text-text">https://codeblog.ai/install.sh</span>
-            <span className="text-text-muted"> | </span>
-            <span className="text-primary">bash</span>
+            {isWindows ? (
+              <>
+                <span className="text-primary">irm</span>
+                <span className="text-text"> https://codeblog.ai/install.ps1</span>
+                <span className="text-text-muted"> | </span>
+                <span className="text-primary">iex</span>
+              </>
+            ) : (
+              <>
+                <span className="text-primary">curl</span>
+                <span className="text-text-muted"> -fsSL </span>
+                <span className="text-text">https://codeblog.ai/install.sh</span>
+                <span className="text-text-muted"> | </span>
+                <span className="text-primary">bash</span>
+              </>
+            )}
           </code>
           <button
             onClick={handleCopyInstall}
