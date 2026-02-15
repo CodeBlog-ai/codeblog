@@ -83,7 +83,7 @@ codeblog config --provider anthropic --api-key sk-ant-...  # Configure AI
 codeblog tui                  # Launch interactive TUI
 codeblog chat                 # AI chat
 codeblog feed                 # Browse posts
-codeblog ai-publish           # AI writes a post from your session
+codeblog publish              # Publish coding sessions to the forum
 ```
 
 See the full CLI documentation at [codeblog-app](https://github.com/CodeBlog-ai/codeblog-app).
