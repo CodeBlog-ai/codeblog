@@ -117,8 +117,12 @@ export const cursorScanner: Scanner = {
     const dirs = this.getSessionDirs();
     const seenIds = new Set<string>();
 
+    // --- Collect project metadata from Format 1/2 directories ---
+    // We need project info (name, path, description) from workspace dirs,
+    // because Format 3 (globalStorage) doesn't store project context.
+    const projectInfoById = new Map<string, { project: string; projectPath?: string; projectDescription?: string }>();
+
     for (const baseDir of dirs) {
-      // Skip globalStorage dir — handled separately via Format 3
       if (baseDir.endsWith("globalStorage")) continue;
 
       const projectDirs = listDirs(baseDir);
@@ -137,75 +141,18 @@ export const cursorScanner: Scanner = {
         const project = projectPath ? path.basename(projectPath) : dirName;
         const projectDescription = projectPath ? extractProjectDescription(projectPath) || undefined : undefined;
 
-        // --- FORMAT 1: agent-transcripts/*.txt ---
+        // Map transcript IDs to project info
         const transcriptsDir = path.join(projectDir, "agent-transcripts");
         for (const filePath of listFiles(transcriptsDir, [".txt"])) {
-          const stats = safeStats(filePath);
-          if (!stats) continue;
-
-          const content = safeReadFile(filePath);
-          if (!content || content.length < 100) continue;
-
-          const userQueries = content.match(/<user_query>\n?([\s\S]*?)\n?<\/user_query>/g) || [];
-          if (userQueries.length === 0) continue;
-
-          const firstQuery = content.match(/<user_query>\n?([\s\S]*?)\n?<\/user_query>/);
-          const preview = firstQuery ? firstQuery[1].trim().slice(0, 200) : content.slice(0, 200);
           const id = path.basename(filePath, ".txt");
-          seenIds.add(id);
-
-          sessions.push({
-            id,
-            source: "cursor",
-            project,
-            projectPath,
-            projectDescription,
-            title: preview.slice(0, 80) || `Cursor session in ${project}`,
-            messageCount: userQueries.length * 2,
-            humanMessages: userQueries.length,
-            aiMessages: userQueries.length,
-            preview,
-            filePath,
-            modifiedAt: stats.mtime,
-            sizeBytes: stats.size,
-          });
-        }
-
-        // --- FORMAT 2: chatSessions/*.json ---
-        for (const filePath of listFiles(path.join(projectDir, "chatSessions"), [".json"])) {
-          const stats = safeStats(filePath);
-          if (!stats || stats.size < 100) continue;
-
-          const data = safeReadJson<CursorChatSession>(filePath);
-          if (!data || !Array.isArray(data.requests) || data.requests.length === 0) continue;
-
-          const humanCount = data.requests.length;
-          const firstMsg = data.requests[0]?.message || "";
-          const preview = (typeof firstMsg === "string" ? firstMsg : "").slice(0, 200);
-          const id = data.sessionId || path.basename(filePath, ".json");
-          seenIds.add(id);
-
-          sessions.push({
-            id,
-            source: "cursor",
-            project,
-            projectPath,
-            projectDescription,
-            title: preview.slice(0, 80) || `Cursor chat in ${project}`,
-            messageCount: humanCount * 2,
-            humanMessages: humanCount,
-            aiMessages: humanCount,
-            preview: preview || "(cursor chat session)",
-            filePath,
-            modifiedAt: stats.mtime,
-            sizeBytes: stats.size,
-          });
+          projectInfoById.set(id, { project, projectPath, projectDescription });
         }
       }
     }
 
-    // --- FORMAT 3: globalStorage state.vscdb (newer Cursor) ---
-    // This supplements Formats 1 & 2 — adds any sessions not already found
+    // --- FORMAT 3: globalStorage state.vscdb (primary, most complete) ---
+    // Format 3 has the richest data: full bubble contents including tool calls,
+    // thinking blocks, and code suggestions. Always prefer this over Format 1/2.
     const globalDb = getGlobalStoragePath();
     if (globalDb) {
       withDb(globalDb, (db) => {
@@ -217,7 +164,6 @@ export const cursorScanner: Scanner = {
           try {
             const data = JSON.parse(row.value) as CursorComposerData;
             const composerId = data.composerId || row.key.replace("composerData:", "");
-            if (seenIds.has(composerId)) continue;
 
             const bubbleHeaders = data.fullConversationHeadersOnly || [];
             if (bubbleHeaders.length === 0) continue;
@@ -237,20 +183,29 @@ export const cursorScanner: Scanner = {
                 );
                 if (bubbleRow.length > 0) {
                   try {
-                    const bubble = JSON.parse(bubbleRow[0].value);
-                    preview = (bubble.text || bubble.message || "").slice(0, 200);
+                    const bubble = JSON.parse(bubbleRow[0].value) as Record<string, unknown>;
+                    preview = extractBubbleContent(bubble).slice(0, 200);
                   } catch { /* */ }
                 }
               }
             }
 
+            // Enrich with project info from Format 1 directories
+            const projInfo = projectInfoById.get(composerId);
+            const project = projInfo?.project || "Cursor Composer";
+            const projectPath = projInfo?.projectPath;
+            const projectDescription = projInfo?.projectDescription;
+
             const createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
             const updatedAt = data.lastUpdatedAt ? new Date(data.lastUpdatedAt) : createdAt;
 
+            seenIds.add(composerId);
             sessions.push({
               id: composerId,
               source: "cursor",
-              project: "Cursor Composer",
+              project,
+              projectPath,
+              projectDescription,
               title: (name || preview || "Cursor composer session").slice(0, 80),
               messageCount: humanCount + aiCount,
               humanMessages: humanCount,
@@ -263,6 +218,96 @@ export const cursorScanner: Scanner = {
           } catch { /* skip malformed entries */ }
         }
       }, undefined);
+    }
+
+    // --- FORMAT 1 & 2: supplement with sessions not found in Format 3 ---
+    for (const baseDir of dirs) {
+      if (baseDir.endsWith("globalStorage")) continue;
+
+      const projectDirs = listDirs(baseDir);
+      for (const projectDir of projectDirs) {
+        const dirName = path.basename(projectDir);
+
+        let projectPath: string | undefined;
+        const workspaceJson = safeReadJson<{ folder?: string }>(path.join(projectDir, "workspace.json"));
+        if (workspaceJson?.folder) {
+          try { projectPath = decodeURIComponent(new URL(workspaceJson.folder).pathname); } catch { /* */ }
+        }
+        if (!projectPath && dirName.startsWith("Users-")) {
+          projectPath = decodeDirNameToPath(dirName) || undefined;
+        }
+
+        const project = projectPath ? path.basename(projectPath) : dirName;
+        const projectDescription = projectPath ? extractProjectDescription(projectPath) || undefined : undefined;
+
+        // --- FORMAT 1: agent-transcripts/*.txt (only if not in Format 3) ---
+        const transcriptsDir = path.join(projectDir, "agent-transcripts");
+        for (const filePath of listFiles(transcriptsDir, [".txt"])) {
+          const id = path.basename(filePath, ".txt");
+          if (seenIds.has(id)) continue; // Already have richer Format 3 data
+
+          const stats = safeStats(filePath);
+          if (!stats) continue;
+
+          const content = safeReadFile(filePath);
+          if (!content || content.length < 100) continue;
+
+          const userQueries = content.match(/<user_query>\n?([\s\S]*?)\n?<\/user_query>/g) || [];
+          if (userQueries.length === 0) continue;
+
+          const firstQuery = content.match(/<user_query>\n?([\s\S]*?)\n?<\/user_query>/);
+          const preview = firstQuery ? firstQuery[1].trim().slice(0, 200) : content.slice(0, 200);
+          seenIds.add(id);
+
+          sessions.push({
+            id,
+            source: "cursor",
+            project,
+            projectPath,
+            projectDescription,
+            title: preview.slice(0, 80) || `Cursor session in ${project}`,
+            messageCount: userQueries.length * 2,
+            humanMessages: userQueries.length,
+            aiMessages: userQueries.length,
+            preview,
+            filePath,
+            modifiedAt: stats.mtime,
+            sizeBytes: stats.size,
+          });
+        }
+
+        // --- FORMAT 2: chatSessions/*.json (only if not in Format 3) ---
+        for (const filePath of listFiles(path.join(projectDir, "chatSessions"), [".json"])) {
+          const stats = safeStats(filePath);
+          if (!stats || stats.size < 100) continue;
+
+          const data = safeReadJson<CursorChatSession>(filePath);
+          if (!data || !Array.isArray(data.requests) || data.requests.length === 0) continue;
+
+          const humanCount = data.requests.length;
+          const firstMsg = data.requests[0]?.message || "";
+          const preview = (typeof firstMsg === "string" ? firstMsg : "").slice(0, 200);
+          const id = data.sessionId || path.basename(filePath, ".json");
+          if (seenIds.has(id)) continue;
+          seenIds.add(id);
+
+          sessions.push({
+            id,
+            source: "cursor",
+            project,
+            projectPath,
+            projectDescription,
+            title: preview.slice(0, 80) || `Cursor chat in ${project}`,
+            messageCount: humanCount * 2,
+            humanMessages: humanCount,
+            aiMessages: humanCount,
+            preview: preview || "(cursor chat session)",
+            filePath,
+            modifiedAt: stats.mtime,
+            sizeBytes: stats.size,
+          });
+        }
+      }
     }
 
     sessions.sort((a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime());
@@ -388,15 +433,13 @@ function parseVscdbSession(virtualPath: string, maxTurns?: number): ParsedSessio
       if (bubbleRows.length === 0) continue;
 
       try {
-        const bubble = JSON.parse(bubbleRows[0].value);
-        const text = bubble.text || bubble.message || bubble.rawText || "";
-        if (!text && header.type === 2) {
-          turns.push({ role: "assistant", content: "(AI response)" });
-          continue;
-        }
+        const bubble = JSON.parse(bubbleRows[0].value) as Record<string, unknown>;
+        const content = extractBubbleContent(bubble);
+        if (!content) continue; // skip truly empty bubbles
+
         turns.push({
           role: header.type === 1 ? "human" : "assistant",
-          content: text || "(empty)",
+          content,
         });
       } catch { /* skip */ }
     }
@@ -421,6 +464,65 @@ function parseVscdbSession(virtualPath: string, maxTurns?: number): ParsedSessio
       turns,
     } as ParsedSession;
   }, null);
+}
+
+// --- Helper: extract text content from a bubble ---
+// Cursor stores different bubble types:
+//   - Regular text messages: content in `text`, `message`, or `rawText`
+//   - Tool calls (capabilityType 15): content in `toolFormerData` (name, params, result)
+//   - Thinking blocks: content in `allThinkingBlocks`
+function extractBubbleContent(bubble: Record<string, unknown>): string {
+  // 1. Direct text content
+  const text = (bubble.text as string) || (bubble.message as string) || (bubble.rawText as string) || "";
+  if (text) return text;
+
+  // 2. Tool call content (capabilityType 15) — extract tool name, args, and result
+  const toolData = bubble.toolFormerData as Record<string, unknown> | undefined;
+  if (toolData && typeof toolData === "object") {
+    const parts: string[] = [];
+    const toolName = (toolData.name as string) || (toolData.tool as string) || "unknown_tool";
+    parts.push(`[Tool: ${toolName}]`);
+
+    // Tool arguments/params
+    const params = toolData.params || toolData.rawArgs;
+    if (params) {
+      const paramStr = typeof params === "string" ? params : JSON.stringify(params);
+      if (paramStr.length > 0 && paramStr !== "{}") {
+        parts.push(`Args: ${paramStr.slice(0, 2000)}`);
+      }
+    }
+
+    // Tool result
+    const result = toolData.result;
+    if (result) {
+      const resultStr = typeof result === "string" ? result : JSON.stringify(result);
+      if (resultStr.length > 0) {
+        parts.push(`Result: ${resultStr.slice(0, 3000)}`);
+      }
+    }
+
+    if (parts.length > 1) return parts.join("\n");
+  }
+
+  // 3. Thinking blocks
+  const thinkingBlocks = bubble.allThinkingBlocks as Array<{ text?: string; content?: string }> | undefined;
+  if (thinkingBlocks && Array.isArray(thinkingBlocks) && thinkingBlocks.length > 0) {
+    const thinking = thinkingBlocks
+      .map((b) => b.text || b.content || "")
+      .filter(Boolean)
+      .join("\n");
+    if (thinking) return `[Thinking]\n${thinking}`;
+  }
+
+  // 4. Code blocks from suggestedCodeBlocks
+  const codeBlocks = bubble.suggestedCodeBlocks as Array<{ code?: string; language?: string }> | undefined;
+  if (codeBlocks && Array.isArray(codeBlocks) && codeBlocks.length > 0) {
+    return codeBlocks
+      .map((b) => `\`\`\`${b.language || ""}\n${b.code || ""}\n\`\`\``)
+      .join("\n");
+  }
+
+  return "";
 }
 
 // --- Type definitions ---
