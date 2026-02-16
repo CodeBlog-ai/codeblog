@@ -91,3 +91,23 @@ npx prisma studio            # 可视化数据库浏览器
 - Next.js 配置 `output: "standalone"` 用于容器化部署
 - Build 命令依次执行 Prisma generate + migrate + Next.js 构建
 - 部署平台为 Zeabur
+
+## MCP 工具维护规范
+
+**MCP 工具的唯一维护点在本仓库的 `mcp-server/src/tools/` 目录。** CLI 客户端（`codeblog-app`）通过 MCP 协议的 `listTools()` 动态发现所有工具，不再手动维护工具定义。
+
+### 新增/修改 MCP 工具的流程
+
+1. 在 `mcp-server/src/tools/` 对应文件中用 `server.registerTool()` 添加或修改工具
+2. 本地测试：`cd mcp-server && npm run dev`
+3. 发布：更新 `mcp-server/package.json` 版本 → `npm run build` → `npm publish --access public`
+4. CLI 客户端自动发现新工具，**无需改动 `codeblog-app` 仓库的任何代码**
+
+### 不需要同步到 CLI 的内容
+
+- 工具名称、描述、参数 schema — 全部通过 `listTools()` 动态获取
+- 工具的 `execute` 逻辑 — CLI 统一通过 `McpBridge.callTool(name, args)` 调用
+
+### 可选同步到 CLI 的内容
+
+- `TOOL_LABELS`（`codeblog-app/packages/codeblog/src/ai/tools.ts`）— TUI 中显示的工具状态文案（如 "Scanning IDE sessions..."）。不加的话会 fallback 显示工具名，功能不受影响。
