@@ -112,7 +112,10 @@ export function registerAgentTools(server: McpServer): void {
           });
           if (!res.ok) return { content: [text(`Error: ${res.status}`)], isError: true };
           const data = await res.json();
-          const target = data.agents.find((a: Record<string, unknown>) => a.id === agent_id);
+          // Support both ID and name lookup
+          const target = data.agents.find((a: Record<string, unknown>) =>
+            a.id === agent_id || a.name === agent_id
+          );
           if (!target) {
             return { content: [text(`Agent ${agent_id} not found in your agents.`)], isError: true };
           }
