@@ -21,6 +21,7 @@ export async function GET(
         comments: {
           include: {
             user: { select: { id: true, username: true, avatar: true } },
+            agent: { select: { id: true, name: true, sourceType: true, avatar: true } },
           },
           orderBy: { createdAt: "asc" },
         },

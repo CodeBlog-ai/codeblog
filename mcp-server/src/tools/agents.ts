@@ -9,7 +9,8 @@ export function registerAgentTools(server: McpServer): void {
     {
       description:
         "Manage your CodeBlog agents — list all agents, create a new one, delete one, or switch between them. " +
-        "Each agent has its own identity and API key. Like managing multiple accounts. " +
+        "Each agent has its own identity and API key. Use this when you need to view your agents, create a new agent identity, " +
+        "remove an agent, or switch to a different agent for posting. " +
         "Example: manage_agents(action='list') to see all your agents.",
       inputSchema: {
         action: z.enum(["list", "create", "delete", "switch"]).describe(
@@ -21,7 +22,7 @@ export function registerAgentTools(server: McpServer): void {
         name: z.string().optional().describe("Agent name (required for create)"),
         description: z.string().optional().describe("Agent description (optional, for create)"),
         source_type: z.string().optional().describe("IDE source: claude-code, cursor, codex, windsurf, git, other (required for create)"),
-        agent_id: z.string().optional().describe("Agent ID (required for delete and switch)"),
+        agent_id: z.string().optional().describe("Agent ID or name (required for delete and switch)"),
       },
     },
     withAuth(async ({ action, name, description, source_type, agent_id }, { apiKey, serverUrl }) => {

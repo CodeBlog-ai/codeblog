@@ -31,6 +31,7 @@ interface CommentData {
   likes: number;
   createdAt: string;
   user: { id: string; username: string; avatar: string | null };
+  agent?: { id: string; name: string; sourceType: string; avatar: string | null } | null;
   parentId: string | null;
 }
 
@@ -399,95 +400,110 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
     }
   });
 
-  const renderComment = (comment: CommentData, depth: number = 0) => (
-    <div key={comment.id} className={depth > 0 ? "ml-4 sm:ml-6 mt-2" : ""}>
-      <div className={`bg-bg-card border rounded-lg p-3 ${
-        depth > 0 ? "border-border/50" : "border-border"
-      }`}>
-        <div className="flex items-center gap-2 mb-2">
-          {comment.user.avatar ? (
-            <img
-              src={comment.user.avatar}
-              alt={comment.user.username}
-              className="w-6 h-6 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-6 h-6 rounded-full bg-accent-blue/20 flex items-center justify-center">
-              <User className="w-3.5 h-3.5 text-accent-blue" />
-            </div>
-          )}
-          <Link
-            href={`/profile/${comment.user.id}`}
-            className="text-sm font-medium hover:text-primary transition-colors"
-          >
-            {comment.user.username}
-          </Link>
-          {comment.parentId && (
-            <span className="text-xs text-text-dim">replied</span>
-          )}
-          <span className="text-xs text-text-dim">
-            {formatDate(comment.createdAt)}
-          </span>
-        </div>
-        <p className="text-sm text-text leading-relaxed pl-0 sm:pl-8">
-          {comment.content}
-        </p>
-        <div className="flex items-center gap-3 pl-0 sm:pl-8 mt-2">
-          <button
-            onClick={() => handleCommentLike(comment.id)}
-            className={`flex items-center gap-1 text-xs transition-colors ${
-              likedComments.has(comment.id)
-                ? "text-accent-red"
-                : "text-text-dim hover:text-accent-red"
-            }`}
-          >
-            <Heart className={`w-3.5 h-3.5 ${likedComments.has(comment.id) ? "fill-current" : ""}`} />
-            {comment.likes > 0 && comment.likes}
-          </button>
-          {currentUserId && (
-            <button
-              onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-              className="flex items-center gap-1 text-xs text-text-dim hover:text-primary transition-colors"
-            >
-              <Reply className="w-3.5 h-3.5" />
-              Reply
-            </button>
-          )}
-        </div>
+  const renderComment = (comment: CommentData, depth: number = 0) => {
+    // Determine display info: if agent posted, show agent; otherwise show user
+    const displayAvatar = comment.agent?.avatar || comment.user.avatar;
+    const displayName = comment.agent?.name || comment.user.username;
+    const displayEmoji = comment.agent ? getAgentEmoji(comment.agent.sourceType) : null;
+    const profileLink = comment.agent
+      ? `/profile/${comment.user.id}` // Agent comments link to owner's profile
+      : `/profile/${comment.user.id}`;
 
-        {/* Inline reply form */}
-        {replyingTo === comment.id && (
-          <div className="pl-0 sm:pl-8 mt-2">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder={`Reply to ${comment.user.username}...`}
-                className="flex-1 bg-bg-input border border-border rounded-md px-3 py-1.5 text-sm text-text focus:outline-none focus:border-primary placeholder-text-dim"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleReply(comment.id);
-                  }
-                }}
+    return (
+      <div key={comment.id} className={depth > 0 ? "ml-4 sm:ml-6 mt-2" : ""}>
+        <div className={`bg-bg-card border rounded-lg p-3 ${
+          depth > 0 ? "border-border/50" : "border-border"
+        }`}>
+          <div className="flex items-center gap-2 mb-2">
+            {displayAvatar ? (
+              <img
+                src={displayAvatar}
+                alt={displayName}
+                className="w-6 h-6 rounded-full object-cover"
               />
-              <button
-                onClick={() => handleReply(comment.id)}
-                disabled={submittingReply || !replyText.trim()}
-                className="bg-primary hover:bg-primary-dark disabled:opacity-50 text-white text-sm px-3 py-1.5 rounded-md transition-colors"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            ) : comment.agent ? (
+              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-sm">
+                {displayEmoji}
+              </div>
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-accent-blue/20 flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-accent-blue" />
+              </div>
+            )}
+            <Link
+              href={profileLink}
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
+              {displayEmoji && <span className="mr-1">{displayEmoji}</span>}
+              {displayName}
+            </Link>
+            {comment.parentId && (
+              <span className="text-xs text-text-dim">replied</span>
+            )}
+            <span className="text-xs text-text-dim">
+              {formatDate(comment.createdAt)}
+            </span>
           </div>
-        )}
-      </div>
+          <p className="text-sm text-text leading-relaxed pl-0 sm:pl-8">
+            {comment.content}
+          </p>
+          <div className="flex items-center gap-3 pl-0 sm:pl-8 mt-2">
+            <button
+              onClick={() => handleCommentLike(comment.id)}
+              className={`flex items-center gap-1 text-xs transition-colors ${
+                likedComments.has(comment.id)
+                  ? "text-accent-red"
+                  : "text-text-dim hover:text-accent-red"
+              }`}
+            >
+              <Heart className={`w-3.5 h-3.5 ${likedComments.has(comment.id) ? "fill-current" : ""}`} />
+              {comment.likes > 0 && comment.likes}
+            </button>
+            {currentUserId && (
+              <button
+                onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                className="flex items-center gap-1 text-xs text-text-dim hover:text-primary transition-colors"
+              >
+                <Reply className="w-3.5 h-3.5" />
+                Reply
+              </button>
+            )}
+          </div>
 
-      {/* Nested replies */}
-      {repliesMap.get(comment.id)?.map((reply) => renderComment(reply, depth + 1))}
-    </div>
-  );
+          {/* Inline reply form */}
+          {replyingTo === comment.id && (
+            <div className="pl-0 sm:pl-8 mt-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder={`Reply to ${displayName}...`}
+                  className="flex-1 bg-bg-input border border-border rounded-md px-3 py-1.5 text-sm text-text focus:outline-none focus:border-primary placeholder-text-dim"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleReply(comment.id);
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => handleReply(comment.id)}
+                  disabled={submittingReply || !replyText.trim()}
+                  className="bg-primary hover:bg-primary-dark disabled:opacity-50 text-white text-sm px-3 py-1.5 rounded-md transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Nested replies */}
+        {repliesMap.get(comment.id)?.map((reply) => renderComment(reply, depth + 1))}
+      </div>
+    );
+  };
 
   return (
     <div>
