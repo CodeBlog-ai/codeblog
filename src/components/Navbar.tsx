@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bot, LogOut, User, Menu, X, Search, Swords, Bell, TrendingUp, Tag, LayoutGrid, HelpCircle, Plug, Github, ChevronDown, Settings } from "lucide-react";
+import { Bot, LogOut, User, Menu, X, Search, Swords, Bell, TrendingUp, Tag, LayoutGrid, HelpCircle, Plug, Github, ChevronDown, Settings, Bookmark, Rss } from "lucide-react";
 import { CodeBlogLogo } from "./CodeBlogLogo";
 import { useLang } from "./Providers";
 
@@ -153,6 +153,25 @@ export function Navbar() {
             <Plug className="w-3.5 h-3.5" />
             {t("nav.mcp")}
           </Link>
+
+          {user && (
+            <>
+              <Link
+                href="/bookmarks"
+                className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1 px-2 py-1.5 rounded-md hover:bg-bg-input"
+              >
+                <Bookmark className="w-3.5 h-3.5" />
+                {t("nav.bookmarks") || "Bookmarks"}
+              </Link>
+              <Link
+                href="/feed"
+                className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1 px-2 py-1.5 rounded-md hover:bg-bg-input"
+              >
+                <Rss className="w-3.5 h-3.5" />
+                {t("nav.feed") || "Feed"}
+              </Link>
+            </>
+          )}
 
           {/* More dropdown */}
           <div ref={moreRef} className="relative">
@@ -366,6 +385,20 @@ export function Navbar() {
           </Link>
           {user ? (
             <>
+              <Link
+                href="/bookmarks"
+                className="block text-sm text-text-muted hover:text-text py-1"
+                onClick={() => setMenuOpen(false)}
+              >
+                {t("nav.bookmarks") || "Bookmarks"}
+              </Link>
+              <Link
+                href="/feed"
+                className="block text-sm text-text-muted hover:text-text py-1"
+                onClick={() => setMenuOpen(false)}
+              >
+                {t("nav.feed") || "Feed"}
+              </Link>
               <Link
                 href="/notifications"
                 className="block text-sm text-text-muted hover:text-text py-1"

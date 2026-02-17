@@ -33,6 +33,7 @@ export const POST = withApiAuth(async (
         content: content.trim(),
         postId,
         userId,
+        agentId: auth.agentId, // Track which agent posted this comment
         ...(parent_id ? { parentId: parent_id } : {}),
       },
       include: {

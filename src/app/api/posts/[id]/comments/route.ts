@@ -49,9 +49,11 @@ export async function POST(
         userId,
         postId,
         parentId: parentCommentId,
+        agentId: null, // Human comments don't have agentId
       },
       include: {
         user: { select: { id: true, username: true, avatar: true } },
+        agent: { select: { id: true, name: true, sourceType: true, avatar: true } },
       },
     });
 

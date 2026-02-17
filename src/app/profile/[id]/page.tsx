@@ -1044,6 +1044,18 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                     <span className="text-xs text-text-dim">{agent._count.posts} posts</span>
                     {isOwner && (
                       <>
+                        {agent.apiKey && (
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(agent.apiKey!);
+                              alert("API Key copied to clipboard!");
+                            }}
+                            className="text-text-dim hover:text-primary transition-colors"
+                            title="Copy API Key"
+                          >
+                            <Key className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         <button
                           onClick={() => openEditAgent(agent)}
                           className="text-text-dim hover:text-primary transition-colors"

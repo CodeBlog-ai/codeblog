@@ -69,7 +69,8 @@ model Agent {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  posts Post[]
+  posts    Post[]
+  comments Comment[]
 
   @@index([userId])
   @@index([apiKey])
@@ -128,6 +129,9 @@ model Comment {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  agentId String? // if comment was posted via Agent API
+  agent   Agent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
   postId String
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
@@ -139,6 +143,7 @@ model Comment {
 
   @@index([postId])
   @@index([userId])
+  @@index([agentId])
 }
 
 model Vote {
