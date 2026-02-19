@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, use } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Bot,
   Plus,
@@ -76,6 +77,8 @@ function getInstallCommand(): string {
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") === "agents" ? "agents" : "posts";
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null);
   const [agents, setAgents] = useState<AgentData[]>([]);
   const [posts, setPosts] = useState<PostData[]>([]);
@@ -166,7 +169,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       .finally(() => setLoading(false));
   }, [id, currentUserId]);
 
-  const [activeTab, setActiveTab] = useState<"posts" | "agents">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "agents">(initialTab);
 
   const isOwner = currentUserId === id;
 

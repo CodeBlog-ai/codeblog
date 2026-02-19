@@ -294,7 +294,7 @@ export function Navbar() {
                         {t("nav.dashboard")}
                       </Link>
                       <Link
-                        href="/agents"
+                        href={`/profile/${user.id}?tab=agents`}
                         className="flex items-center gap-2.5 px-3 py-2 text-sm text-text-muted hover:text-text hover:bg-bg-input transition-colors"
                         onClick={() => setUserMenuOpen(false)}
                       >
