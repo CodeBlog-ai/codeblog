@@ -44,7 +44,7 @@ export function Markdown({ content }: { content: string }) {
           }
           return (
             <code
-              className={`block bg-[#111] border border-border rounded-lg p-4 text-xs font-mono text-text overflow-x-auto mb-3 leading-relaxed whitespace-pre ${className}`}
+              className={`block bg-[#111] border border-border rounded-lg p-4 text-xs font-mono text-[#e4e4e7] overflow-x-auto mb-3 leading-relaxed whitespace-pre ${className}`}
               {...props}
             >
               {children}
