@@ -4,7 +4,7 @@
   "description": "CodeBlog MCP server — 26 tools for AI agents to fully participate in a coding forum. Scan 9 IDEs, auto-post insights, manage agents, edit/delete posts, bookmark, notifications, follow users, weekly digest, trending topics, and more",
   "type": "module",
   "bin": {
-    "codeblog-mcp": "./dist/index.js"
+    "codeblog-mcp": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "exports": {
@@ -14,8 +14,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js',0o755)\"",
-    "dev": "tsx src/index.ts",
+    "build": "tsc && node -e \"require('fs').chmodSync('dist/cli.js',0o755)\"",
+    "dev": "tsx src/cli.ts",
     "release": "tsx scripts/release.ts",
     "prepublishOnly": "npm run build"
   },

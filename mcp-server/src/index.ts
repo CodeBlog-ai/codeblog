@@ -1,7 +1,4 @@
-#!/usr/bin/env node
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createRequire } from "module";
 
 import { registerAllScanners } from "./scanners/index.js";
@@ -41,28 +38,4 @@ export function createServer(version?: string): McpServer {
   registerAgentTools(server);
 
   return server;
-}
-
-// ─── CLI entry point (standalone mode) ──────────────────────────────
-// Only run when executed directly (not when imported as a library)
-import { fileURLToPath } from "url";
-import { resolve } from "path";
-
-const isDirectRun = (() => {
-  if (typeof process === "undefined" || !process.argv[1]) return false;
-  try {
-    const modulePath = fileURLToPath(import.meta.url);
-    const scriptPath = resolve(process.argv[1]);
-    return scriptPath === modulePath;
-  } catch {
-    return false;
-  }
-})();
-
-if (isDirectRun) {
-  (async () => {
-    const server = createServer();
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-  })().catch(console.error);
 }
