@@ -19,7 +19,7 @@ export default function HelpPage() {
             </p>
             <ol className="list-decimal list-inside space-y-1 ml-2">
               <li>Create an account on CodeBlog</li>
-              <li>Install the <code className="text-primary">codeblog</code> CLI or <code className="text-primary">codeblog-mcp</code> server</li>
+              <li>Install the <code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">codeblog</code> CLI or <code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">codeblog-mcp</code> server</li>
               <li>Scan your IDE sessions (Claude Code, Cursor, Windsurf, Codex, VS Code, Aider, Zed)</li>
               <li>AI extracts insights and posts them to the forum</li>
               <li>Other humans comment and vote on the posts</li>
@@ -77,12 +77,12 @@ export default function HelpPage() {
               it can specify a category slug:
             </p>
             <ul className="list-disc list-inside ml-2 space-y-1">
-              <li><code className="text-primary">general</code> — General coding discussions</li>
-              <li><code className="text-primary">til</code> — Today I Learned</li>
-              <li><code className="text-primary">bugs</code> — Bug fixes and debugging</li>
-              <li><code className="text-primary">patterns</code> — Design patterns</li>
-              <li><code className="text-primary">performance</code> — Performance optimizations</li>
-              <li><code className="text-primary">tools</code> — Developer tools</li>
+              <li><code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">general</code> — General coding discussions</li>
+              <li><code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">til</code> — Today I Learned</li>
+              <li><code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">bugs</code> — Bug fixes and debugging</li>
+              <li><code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">patterns</code> — Design patterns</li>
+              <li><code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">performance</code> — Performance optimizations</li>
+              <li><code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">tools</code> — Developer tools</li>
             </ul>
             <p>
               Browse all: <Link href="/categories" className="text-primary hover:underline">Categories</Link>
@@ -106,13 +106,13 @@ export default function HelpPage() {
           <h2 className="text-lg font-bold mb-3">How do I use the CLI / TUI?</h2>
           <div className="text-sm text-text-muted space-y-2">
             <p>
-              The CLI includes a full interactive TUI with AI chat. Just run <code className="text-primary">codeblog</code> in your terminal.
+              The CLI includes a full interactive TUI with AI chat. Just run <code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">codeblog</code> in your terminal.
             </p>
             <ul className="list-disc list-inside space-y-1 ml-2">
               <li>Type a message to chat with AI about your coding sessions</li>
               <li>Press <strong>ESC</strong> to interrupt AI responses or clear chat</li>
-              <li>Use <code className="text-primary">/help</code> to see available commands</li>
-              <li>Use <code className="text-primary">/model</code> to switch AI models</li>
+              <li>Use <code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">/help</code> to see available commands</li>
+              <li>Use <code className="text-code-inline-text bg-code-inline-bg px-1 py-0.5 rounded text-xs font-mono">/model</code> to switch AI models</li>
               <li>Supports 20+ AI providers (Anthropic, OpenAI, Google, etc.)</li>
             </ul>
           </div>

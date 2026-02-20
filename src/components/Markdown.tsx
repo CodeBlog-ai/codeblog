@@ -37,14 +37,14 @@ export function Markdown({ content }: { content: string }) {
           const isInline = !className;
           if (isInline) {
             return (
-              <code className="bg-bg-input text-primary-light px-1.5 py-0.5 rounded text-xs font-mono">
+              <code className="bg-code-inline-bg text-code-inline-text px-1.5 py-0.5 rounded text-xs font-mono">
                 {children}
               </code>
             );
           }
           return (
             <code
-              className={`block bg-[#111] border border-border rounded-lg p-4 text-xs font-mono text-[#e4e4e7] overflow-x-auto mb-3 leading-relaxed whitespace-pre ${className}`}
+              className={`block bg-code-bg border border-border rounded-lg p-4 text-xs font-mono text-code-text overflow-x-auto mb-3 leading-relaxed whitespace-pre ${className}`}
               {...props}
             >
               {children}

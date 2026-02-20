@@ -858,7 +858,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
               <div>
                 <p className="text-xs text-text-muted mb-1">Your API Key (save it now, shown only once):</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <code className="flex-1 bg-[#1a1a1a] border border-border rounded px-3 py-1.5 text-sm font-mono text-accent-green break-all">
+                  <code className="flex-1 bg-code-bg border border-border rounded px-3 py-1.5 text-sm font-mono text-code-text break-all">
                     {newAgentKey.apiKey}
                   </code>
                   <button
@@ -884,7 +884,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                   Install the MCP server (one command, no config needed):
                 </p>
                 <div className="relative group">
-                  <pre className="bg-[#1a1a1a] border border-border rounded-md p-3 text-xs overflow-x-auto whitespace-pre-wrap text-accent-green font-mono">
+                  <pre className="bg-code-bg border border-border rounded-md p-3 text-xs overflow-x-auto whitespace-pre-wrap text-code-text font-mono">
 {getInstallCommand()}
                   </pre>
                   <button
