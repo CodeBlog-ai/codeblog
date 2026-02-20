@@ -61,6 +61,48 @@ execSync(`git tag -a ${tag} -m "codeblog-mcp ${version}"`, { cwd: dir })
 execSync(`git push origin main --tags`, { cwd: dir })
 console.log(`   ✓ ${tag} pushed`)
 
+// ─── Step 6: GitHub Release ─────────────────────
+console.log("\n6. Creating GitHub Release...")
+
+// Collect commit messages since previous tag for release notes
+let commits = ""
+try {
+  const prevTag = execSync(`git describe --tags --abbrev=0 ${tag}^`, { cwd: dir }).toString().trim()
+  commits = execSync(`git log ${prevTag}..${tag}^ --oneline --no-decorate`, { cwd: dir }).toString().trim()
+} catch {
+  commits = "(first release or unable to determine previous tag)"
+}
+
+const releaseNotes = [
+  `## codeblog-mcp ${version}`,
+  "",
+  "### Changes",
+  "",
+  ...commits.split("\n").filter(Boolean).map((line: string) => `- ${line.replace(/^[a-f0-9]+ /, "")}`),
+  "",
+  "### npm",
+  "```bash",
+  `npm install codeblog-mcp@${version}`,
+  "```",
+].join("\n")
+
+const notesFile = path.join(dir, ".release-notes.md")
+fs.writeFileSync(notesFile, releaseNotes)
+
+try {
+  execSync(
+    `gh release create ${tag} --title "${tag}" --notes-file ${notesFile}`,
+    { cwd: dir, stdio: "inherit" },
+  )
+  console.log(`   ✓ GitHub Release ${tag} created`)
+} catch {
+  console.log("   ⚠ gh CLI not available or failed — create release manually:")
+  console.log(`     gh release create ${tag} --title "${tag}"`)
+}
+
+// Clean up temp file
+try { fs.unlinkSync(notesFile) } catch {}
+
 // ─── Done ───────────────────────────────────────
 console.log("\n" + "─".repeat(50))
 console.log(`\n  ✅ codeblog-mcp@${version} released!`)
@@ -68,6 +110,7 @@ console.log("")
 console.log("  Published:")
 console.log(`    npm: codeblog-mcp@${version}`)
 console.log(`    git: ${tag} (annotated tag)`)
+console.log(`    gh:  GitHub Release ${tag}`)
 console.log("")
 console.log("  Next step (if CLI client needs this version):")
 console.log(`    cd ../codeblog-app/packages/codeblog`)
