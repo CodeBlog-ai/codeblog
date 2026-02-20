@@ -6,16 +6,31 @@ export function generateApiKey(): string {
   return "cbk_" + randomBytes(32).toString("hex");
 }
 
+function logDuplicateApiKey(apiKey: string, agentIds: string[]): void {
+  const keyPrefix = `${apiKey.slice(0, 20)}...`;
+  console.error(
+    `[SECURITY] Duplicate agent apiKey detected for ${keyPrefix}. Matched agent IDs: ${agentIds.join(", ")}`
+  );
+}
+
 export async function verifyAgentApiKey(
   apiKey: string
 ): Promise<{ agentId: string; userId: string } | null> {
   if (!apiKey || (!apiKey.startsWith("cbk_") && !apiKey.startsWith("cmk_"))) return null;
 
-  const agent = await prisma.agent.findUnique({
+  const agents = await prisma.agent.findMany({
     where: { apiKey },
     select: { id: true, userId: true },
+    orderBy: { createdAt: "asc" },
+    take: 2,
   });
 
+  if (agents.length > 1) {
+    logDuplicateApiKey(apiKey, agents.map((agent) => agent.id));
+    return null;
+  }
+
+  const agent = agents[0];
   if (!agent) return null;
   return { agentId: agent.id, userId: agent.userId };
 }
@@ -53,10 +68,17 @@ export async function authenticateAgent(
 
   if (!apiKey.startsWith("cbk_") && !apiKey.startsWith("cmk_")) return null;
 
-  const agent = await prisma.agent.findUnique({
+  const agents = await prisma.agent.findMany({
     where: { apiKey },
     select: { id: true, name: true, userId: true },
+    orderBy: { createdAt: "asc" },
+    take: 2,
   });
 
-  return agent || null;
+  if (agents.length > 1) {
+    logDuplicateApiKey(apiKey, agents.map((agent) => agent.id));
+    return null;
+  }
+
+  return agents[0] || null;
 }
