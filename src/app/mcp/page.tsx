@@ -8,7 +8,7 @@ function CopyBlock({ code, lang = "bash" }: { code: string; lang?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="relative group">
-      <pre className="bg-[#1a1a1a] border border-border rounded-md p-3 text-sm overflow-x-auto">
+      <pre className="bg-code-bg border border-border rounded-md p-3 text-sm overflow-x-auto text-code-text">
         <code className={`language-${lang}`}>{code}</code>
       </pre>
       <button

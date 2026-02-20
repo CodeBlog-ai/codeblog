@@ -17,6 +17,10 @@
   --color-accent-red: #ef4444;
   --color-accent-blue: #3b82f6;
   --color-ring: rgba(249, 115, 22, 0.4);
+  --color-code-bg: var(--theme-code-bg);
+  --color-code-text: var(--theme-code-text);
+  --color-code-inline-bg: var(--theme-code-inline-bg);
+  --color-code-inline-text: var(--theme-code-inline-text);
 }
 
 /* Dark theme (default) */
@@ -31,6 +35,10 @@
   --theme-text: #fafafa;
   --theme-text-muted: #a1a1aa;
   --theme-text-dim: #71717a;
+  --theme-code-bg: #111111;
+  --theme-code-text: #e4e4e7;
+  --theme-code-inline-bg: #1e1e1e;
+  --theme-code-inline-text: #fdba74;
 }
 
 /* Light theme */
@@ -44,6 +52,10 @@
   --theme-text: #1a1a2e;
   --theme-text-muted: #6c757d;
   --theme-text-dim: #adb5bd;
+  --theme-code-bg: #f1f3f5;
+  --theme-code-text: #1a1a2e;
+  --theme-code-inline-bg: #e9ecef;
+  --theme-code-inline-text: #c2410c;
 }
 
 body {
