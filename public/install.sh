@@ -184,7 +184,11 @@ install_binary() {
 
   # macOS code signing
   if [ "$(uname -s)" = "Darwin" ] && command -v codesign >/dev/null 2>&1; then
-    codesign --sign - --force "$INSTALL_DIR/$BIN_NAME" 2>/dev/null || true
+    codesign --remove-signature "$INSTALL_DIR/$BIN_NAME" >/dev/null 2>&1 || true
+    codesign --sign - --force "$INSTALL_DIR/$BIN_NAME" >/dev/null 2>&1 || \
+      fail "macOS code signing failed for $INSTALL_DIR/$BIN_NAME"
+    codesign --verify --deep --strict "$INSTALL_DIR/$BIN_NAME" >/dev/null 2>&1 || \
+      fail "Installed binary failed macOS signature verification"
   fi
   spinner_stop "Installed to ${DIM}${INSTALL_DIR}/${BIN_NAME}${NC}"
 
@@ -295,13 +299,44 @@ print_outro() {
 
 # ── Launch prompt ───────────────────────────────────────────────────────────
 prompt_launch() {
-  # Only prompt on fresh install
+  # Only auto-launch on fresh install
   if [ "$WAS_INSTALLED" -eq 1 ]; then return; fi
   if [ "$RUN_ONBOARD" = "no" ]; then return; fi
 
+  # Need a TTY to launch interactively
+  if [ ! -r /dev/tty ]; then
+    echo ""
+    echo -e "  ${CYAN}▸${NC} Run ${CYAN}${BOLD}codeblog${NC} to get started."
+    echo ""
+    return
+  fi
+
   echo ""
-  echo -e "  ${CYAN}▸${NC} Run ${CYAN}${BOLD}codeblog${NC} to get started."
+  echo -e "  ${CYAN}◆${NC} ${BOLD}Press Enter to launch codeblog${NC} ${DIM}(or Ctrl+C to exit)${NC}"
   echo ""
+  read -r < /dev/tty
+
+  # Ensure the binary is findable
+  export PATH="$INSTALL_DIR:$PATH"
+
+  # Capture terminal size before launching (pipe environments lose this info)
+  local term_cols term_lines
+  term_cols="$(tput cols < /dev/tty 2>/dev/null || echo 80)"
+  term_lines="$(tput lines < /dev/tty 2>/dev/null || echo 24)"
+
+  # Use `script` to allocate a fresh PTY for the Bun process.
+  # Direct exec with /dev/tty redirections fails because Bun's kqueue-based
+  # WriteStream init gets EINVAL in curl|bash pipe environments.
+  # `script` creates a real PTY that Bun can use without issues.
+  if [ "$(uname -s)" = "Darwin" ]; then
+    # macOS: script -q outfile command...
+    COLUMNS="$term_cols" LINES="$term_lines" \
+      script -q /dev/null "$INSTALL_DIR/$BIN_NAME" < /dev/tty
+  else
+    # Linux: script -q -c "command" outfile
+    COLUMNS="$term_cols" LINES="$term_lines" \
+      script -qc "$INSTALL_DIR/$BIN_NAME" /dev/null < /dev/tty
+  fi
 }
 
 # ── Main ────────────────────────────────────────────────────────────────────

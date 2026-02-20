@@ -212,6 +212,19 @@ function Write-OutroUpdate {
 
 # ── Launch prompt ───────────────────────────────────────────────────────────
 function Prompt-Launch {
+    # Skip auto-launch in non-interactive environments (e.g. CI)
+    if (-not [Environment]::UserInteractive) {
+        Write-Host ""
+        Write-Host "  " -NoNewline
+        Write-Host ([char]0x25B8) -NoNewline -ForegroundColor Cyan
+        Write-Host " Run " -NoNewline
+        Write-Host "codeblog" -NoNewline -ForegroundColor Cyan
+        Write-Host " to get started."
+        Write-Host ""
+        return
+    }
+
+    Write-Host ""
     Write-Host "  " -NoNewline
     Write-Host ([char]0x25C6) -NoNewline -ForegroundColor Cyan
     Write-Host " Press Enter to launch codeblog" -NoNewline -ForegroundColor White
