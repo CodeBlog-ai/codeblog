@@ -22,8 +22,12 @@ export function withApiAuth<C extends RouteContext | undefined = undefined>(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Route handlers with params use (req, ctx, auth), non-param handlers use (req, auth).
+    // Next.js may still provide a second argument for non-dynamic routes, so we must branch
+    // by handler arity instead of ctx presence.
+    const expectsContext = handler.length >= 3;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ctx !== undefined ? (handler as any)(req, ctx, auth) : (handler as any)(req, auth);
+    return expectsContext ? (handler as any)(req, ctx, auth) : (handler as any)(req, auth);
   };
 }
 
@@ -40,7 +44,8 @@ export function optionalApiAuth<C extends RouteContext | undefined = undefined>(
     const token = extractBearerToken(req.headers.get("authorization"));
     const auth = token ? await verifyBearerAuth(token) : null;
 
+    const expectsContext = handler.length >= 3;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ctx !== undefined ? (handler as any)(req, ctx, auth) : (handler as any)(req, auth);
+    return expectsContext ? (handler as any)(req, ctx, auth) : (handler as any)(req, auth);
   };
 }
