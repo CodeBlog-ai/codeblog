@@ -225,6 +225,23 @@ function isToolResult(result: unknown): result is ToolResult {
   return typeof result === "object" && result !== null && "content" in result && "isError" in result;
 }
 
+/** Strip duplicate title from the beginning of content (AI models sometimes prepend it) */
+function stripTitleFromContent(title: string, content: string): string {
+  const trimmed = content.trimStart();
+  const prefixes = [
+    `# ${title}`,
+    `## ${title}`,
+    `**${title}**`,
+    title,
+  ];
+  for (const prefix of prefixes) {
+    if (trimmed.startsWith(prefix)) {
+      return trimmed.slice(prefix.length).trimStart();
+    }
+  }
+  return content;
+}
+
 function recordPostedSession(sessionId: string): void {
   const postedFile = path.join(CONFIG_DIR, "posted_sessions.json");
   let postedSessions: Set<string> = new Set();
@@ -259,6 +276,7 @@ export function registerPostingTools(server: McpServer): void {
         "1. Display the COMPLETE preview to the user — show every field (title, summary, category, tags) AND the article content. Do NOT summarize or shorten it.\n" +
         "2. Ask the user if they want to publish, edit something, or discard. Use natural, conversational language.\n" +
         "3. If the user wants edits: apply their changes, call this tool again with mode='manual' and updated content, and show the new preview.\n" +
+        "   IMPORTANT: The 'content' field must NOT start with the title. Title is a separate field — never include it as a heading or plain text at the beginning of content.\n" +
         "4. Only publish after the user explicitly approves.\n" +
         "5. NEVER expose internal tool names or preview IDs to the user. Handle them silently.",
       inputSchema: {
@@ -266,7 +284,7 @@ export function registerPostingTools(server: McpServer): void {
           "Preview mode: 'manual' = provide title+content, 'auto' = scan and generate, 'digest' = weekly digest"
         ),
         title: z.string().optional().describe("Post title (manual mode)"),
-        content: z.string().optional().describe("Post content in markdown (manual mode)"),
+        content: z.string().optional().describe("Post content in markdown (manual mode). MUST NOT start with the title — title is a separate field."),
         source_session: z.string().optional().describe("Session file path from scan_sessions (manual mode, required)"),
         tags: z.array(z.string()).optional().describe("Tags like ['react', 'typescript']"),
         summary: z.string().optional().describe("One-line summary/hook"),
@@ -344,12 +362,13 @@ export function registerPostingTools(server: McpServer): void {
       description:
         "Publish a previously previewed post.\n" +
         "Optionally override title, content, tags, etc. before publishing.\n\n" +
+        "IMPORTANT: The 'content' field must NOT start with the title. Title is a separate field.\n" +
         "IMPORTANT: Do NOT mention this tool's name, the preview_id, or any internal details to the user.\n" +
         "Simply confirm the post was published and share the link.",
       inputSchema: {
         preview_id: z.string().describe("The preview_id returned by preview_post"),
         title: z.string().optional().describe("Override the title"),
-        content: z.string().optional().describe("Override the content"),
+        content: z.string().optional().describe("Override the content. MUST NOT start with the title."),
         tags: z.array(z.string()).optional().describe("Override tags"),
         summary: z.string().optional().describe("Override summary"),
         category: z.string().optional().describe("Override category"),
@@ -367,9 +386,10 @@ export function registerPostingTools(server: McpServer): void {
         };
       }
 
+      const finalTitle = title || preview.title;
       const finalData = {
-        title: title || preview.title,
-        content: content || preview.content,
+        title: finalTitle,
+        content: stripTitleFromContent(finalTitle, content || preview.content),
         tags: tags || preview.tags,
         summary: summary || preview.summary,
         category: category || preview.category,
@@ -440,6 +460,7 @@ export function registerPostingTools(server: McpServer): void {
           "Show the actual code. End with what you learned. " +
           "Use first person ('I tried...', 'I realized...', 'turns out...'). " +
           "Be opinionated. Be specific. Include real code snippets. " +
+          "IMPORTANT: Do NOT start content with the title — title is a separate field. " +
           "Imagine posting this on Juejin — would people actually read it?"
         ),
         source_session: z.string().describe("Session file path (from scan_sessions). Required to prove this is from a real session."),

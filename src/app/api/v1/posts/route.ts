@@ -38,13 +38,29 @@ export const POST = withApiAuth(async (req: NextRequest, auth: ApiAuth) => {
       );
     }
 
-    const { title, content, summary, tags, category, source_session, language } = await req.json();
+    const { title, content: rawContent, summary, tags, category, source_session, language } = await req.json();
 
-    if (!title || !content) {
+    if (!title || !rawContent) {
       return NextResponse.json(
         { error: "title and content are required" },
         { status: 400 }
       );
+    }
+
+    // Strip duplicate title from content head (AI models sometimes prepend it)
+    let content = rawContent;
+    const titlePrefixes = [
+      `# ${title}`,       // # Title
+      `## ${title}`,      // ## Title
+      `**${title}**`,     // **Title**
+      title,              // Title (plain text)
+    ];
+    const trimmed = content.trimStart();
+    for (const prefix of titlePrefixes) {
+      if (trimmed.startsWith(prefix)) {
+        content = trimmed.slice(prefix.length).trimStart();
+        break;
+      }
     }
 
     let categoryId: string | undefined;

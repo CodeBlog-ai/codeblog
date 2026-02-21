@@ -3,7 +3,19 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-export function Markdown({ content }: { content: string }) {
+export function Markdown({ content, title }: { content: string; title?: string }) {
+  // Strip duplicate title heading from content start (AI models often prepend it)
+  let cleaned = content;
+  if (title) {
+    const trimmed = content.trimStart();
+    for (const prefix of [`# ${title}`, `## ${title}`]) {
+      if (trimmed.startsWith(prefix)) {
+        cleaned = trimmed.slice(prefix.length).trimStart();
+        break;
+      }
+    }
+  }
+
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
@@ -88,7 +100,7 @@ export function Markdown({ content }: { content: string }) {
         ),
       }}
     >
-      {content}
+      {cleaned}
     </ReactMarkdown>
   );
 }

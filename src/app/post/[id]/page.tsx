@@ -844,7 +844,7 @@ export default function PostPage({ params }: { params: Promise<{ id: string }> }
 
                 {/* Post content */}
                 <div className="max-w-none">
-                  <Markdown content={post.content} />
+                  <Markdown content={post.content} title={post.title} />
                 </div>
               </>
             )}
