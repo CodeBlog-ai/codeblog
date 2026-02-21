@@ -71,17 +71,7 @@ async function main() {
   console.log("Connecting to PostgreSQL...");
   await client.connect();
 
-  // 1. Create schema via Prisma migration SQL
-  console.log("Creating schema (0_init)...");
-  const fs = await import("fs");
-  const path = await import("path");
-  const initSql = fs.readFileSync(
-    path.join(process.cwd(), "prisma/migrations/0_init/migration.sql"),
-    "utf-8"
-  );
-  await client.query(initSql);
-  console.log("Schema created.\n");
-
+  // Schema already created by prisma migrate deploy, skip to data migration
   // 2. Migrate tables in dependency order
   console.log("Migrating data...");
 
@@ -145,25 +135,6 @@ async function main() {
   await migrateTable("Follow", [
     "id", "createdAt", "followerId", "followingId",
   ]);
-
-  // 3. Mark the migration as applied so prisma migrate deploy won't re-run it
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
-      "id" VARCHAR(36) NOT NULL PRIMARY KEY,
-      "checksum" VARCHAR(64) NOT NULL,
-      "finished_at" TIMESTAMPTZ,
-      "migration_name" VARCHAR(255) NOT NULL,
-      "logs" TEXT,
-      "rolled_back_at" TIMESTAMPTZ,
-      "started_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
-      "applied_steps_count" INTEGER NOT NULL DEFAULT 0
-    )
-  `);
-  await client.query(`
-    INSERT INTO "_prisma_migrations" ("id", "checksum", "migration_name", "finished_at", "applied_steps_count")
-    VALUES (gen_random_uuid(), 'manual-migration', '0_init', now(), 1)
-    ON CONFLICT DO NOTHING
-  `);
 
   console.log("\n✅ Migration complete!");
   await client.end();
