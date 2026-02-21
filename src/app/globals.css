@@ -1,22 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #f97316;
-  --color-primary-dark: #ea580c;
-  --color-primary-light: #fdba74;
+  --color-primary: #ff6933;
+  --color-primary-dark: #e8551f;
+  --color-primary-light: #ff8c5c;
   --color-bg: var(--theme-bg);
   --color-bg-primary: var(--theme-bg-primary);
   --color-bg-card: var(--theme-bg-card);
   --color-bg-hover: var(--theme-bg-hover);
   --color-bg-input: var(--theme-bg-input);
   --color-border: var(--theme-border);
+  --color-border-hover: var(--theme-border-hover);
   --color-text: var(--theme-text);
+  --color-text-secondary: var(--theme-text-secondary);
   --color-text-muted: var(--theme-text-muted);
   --color-text-dim: var(--theme-text-dim);
   --color-accent-green: #22c55e;
   --color-accent-red: #ef4444;
   --color-accent-blue: #3b82f6;
-  --color-ring: rgba(249, 115, 22, 0.4);
+  --color-ring: rgba(255, 105, 51, 0.3);
   --color-code-bg: var(--theme-code-bg);
   --color-code-text: var(--theme-code-text);
   --color-code-inline-bg: var(--theme-code-inline-bg);
@@ -26,36 +28,40 @@
 /* Dark theme (default) */
 :root,
 [data-theme="dark"] {
-  --theme-bg: #0a0a0a;
-  --theme-bg-primary: #0a0a0a;
-  --theme-bg-card: #141414;
-  --theme-bg-hover: #1c1c1c;
-  --theme-bg-input: #1e1e1e;
-  --theme-border: #262626;
-  --theme-text: #fafafa;
-  --theme-text-muted: #a1a1aa;
-  --theme-text-dim: #71717a;
-  --theme-code-bg: #111111;
-  --theme-code-text: #e4e4e7;
-  --theme-code-inline-bg: #1e1e1e;
-  --theme-code-inline-text: #fdba74;
+  --theme-bg: #050505;
+  --theme-bg-primary: #050505;
+  --theme-bg-card: #0e0e10;
+  --theme-bg-hover: #161618;
+  --theme-bg-input: #131315;
+  --theme-border: #1e1e22;
+  --theme-border-hover: #2e2e33;
+  --theme-text: #f0f0f2;
+  --theme-text-secondary: #c8c8cd;
+  --theme-text-muted: #8e8e96;
+  --theme-text-dim: #55555e;
+  --theme-code-bg: #0a0a0c;
+  --theme-code-text: #e0e0e4;
+  --theme-code-inline-bg: #161618;
+  --theme-code-inline-text: #ff8c5c;
 }
 
 /* Light theme */
 [data-theme="light"] {
-  --theme-bg: #f8f9fa;
+  --theme-bg: #fafafa;
   --theme-bg-primary: #ffffff;
   --theme-bg-card: #ffffff;
-  --theme-bg-hover: #f1f3f5;
-  --theme-bg-input: #f1f3f5;
-  --theme-border: #dee2e6;
-  --theme-text: #1a1a2e;
-  --theme-text-muted: #6c757d;
-  --theme-text-dim: #adb5bd;
-  --theme-code-bg: #f1f3f5;
-  --theme-code-text: #1a1a2e;
-  --theme-code-inline-bg: #e9ecef;
-  --theme-code-inline-text: #c2410c;
+  --theme-bg-hover: #f5f5f5;
+  --theme-bg-input: #f0f0f2;
+  --theme-border: #e8e8ec;
+  --theme-border-hover: #d0d0d6;
+  --theme-text: #1a1a1e;
+  --theme-text-secondary: #3a3a42;
+  --theme-text-muted: #6e6e78;
+  --theme-text-dim: #a0a0aa;
+  --theme-code-bg: #f5f5f7;
+  --theme-code-text: #1a1a1e;
+  --theme-code-inline-bg: #ededf0;
+  --theme-code-inline-text: #c93d14;
 }
 
 body {

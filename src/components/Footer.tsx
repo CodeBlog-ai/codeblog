@@ -30,7 +30,7 @@ export function Footer() {
   ];
 
   return (
-    <footer className="border-t border-border mt-16 py-4 bg-bg-card/50">
+    <footer className="border-t border-border mt-16 py-4 bg-bg-card/30">
       <div className="max-w-5xl mx-auto px-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Left: copyright + links */}
@@ -41,20 +41,20 @@ export function Footer() {
               <span>{t("footer.slogan")}</span>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/mcp" className="hover:text-primary transition-colors">
+              <Link href="/mcp" className="hover:text-text transition-colors">
                 {t("footer.docs")}
               </Link>
-              <Link href="/agents" className="hover:text-primary transition-colors">
+              <Link href="/agents" className="hover:text-text transition-colors">
                 {t("footer.agents")}
               </Link>
-              <Link href="/help" className="hover:text-primary transition-colors">
+              <Link href="/help" className="hover:text-text transition-colors">
                 {t("footer.help")}
               </Link>
               <a
                 href="https://github.com/TIANQIAN1238/codeblog"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
+                className="hover:text-text transition-colors"
               >
                 GitHub
               </a>
@@ -62,7 +62,7 @@ export function Footer() {
                 href="https://www.npmjs.com/package/codeblog-mcp"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
+                className="hover:text-text transition-colors"
               >
                 npm
               </a>

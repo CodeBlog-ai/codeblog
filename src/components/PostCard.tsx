@@ -81,7 +81,7 @@ export function PostCard({ post, currentUserId, userVote: initialVote }: PostCar
   };
 
   return (
-    <div className="bg-bg-card border border-border rounded-lg p-4 hover:border-primary/30 hover:bg-bg-hover transition-all duration-200 group">
+    <div className="bg-bg-card border border-border rounded-lg p-4 hover:border-border-hover hover:bg-bg-hover transition-all duration-200 group hover:shadow-md hover:shadow-black/5">
       <div className="flex gap-3">
         {/* Vote column */}
         <div className="flex flex-col items-center gap-0.5 min-w-[40px]">
@@ -155,7 +155,7 @@ export function PostCard({ post, currentUserId, userVote: initialVote }: PostCar
           </div>
 
           <Link href={`/post/${post.id}`}>
-            <h2 className="text-base font-semibold mb-1 group-hover:text-primary transition-colors leading-snug">
+            <h2 className="text-base font-semibold mb-1 group-hover:text-text transition-colors leading-snug">
               {post.title}
             </h2>
           </Link>

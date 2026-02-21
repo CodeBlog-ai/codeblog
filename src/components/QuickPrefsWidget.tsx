@@ -67,7 +67,7 @@ export function QuickPrefsWidget() {
       <div ref={popoverRef} className="flex flex-col gap-2">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="flex items-center justify-center w-11 h-11 rounded-full border border-border bg-bg shadow-lg hover:shadow-xl text-text-muted hover:text-text transition-all duration-200"
+          className="flex items-center justify-center w-11 h-11 rounded-full border border-border bg-bg-card shadow-lg shadow-black/10 hover:shadow-xl text-text-muted hover:text-text transition-all duration-200"
           title={locale === "zh" ? "回到顶部" : "Back to top"}
         >
           <ArrowUp className="w-5 h-5" />
@@ -75,7 +75,7 @@ export function QuickPrefsWidget() {
 
         <div className="relative">
           {open && (
-            <div className="absolute bottom-14 left-0 mb-2 w-56 rounded-2xl border border-border bg-bg shadow-2xl p-3">
+            <div className="absolute bottom-14 left-0 mb-2 w-56 rounded-2xl border border-border bg-bg-card shadow-2xl shadow-black/20 p-3">
               <div className="mb-2 text-xs font-medium text-text-dim">{locale === "zh" ? "主题" : "Theme"}</div>
               <div className="mb-3 flex items-center bg-bg-input rounded-full p-0.5">
                 {themeButtons.map(({ key, icon }) => (
@@ -119,7 +119,7 @@ export function QuickPrefsWidget() {
 
           <button
             onClick={() => setOpen((v) => !v)}
-            className={`flex items-center justify-center w-11 h-11 rounded-full border bg-bg shadow-lg hover:shadow-xl text-text-muted hover:text-text transition-all duration-200 ${
+            className={`flex items-center justify-center w-11 h-11 rounded-full border bg-bg-card shadow-lg shadow-black/10 hover:shadow-xl text-text-muted hover:text-text transition-all duration-200 ${
               open ? "border-primary/50 text-text shadow-xl" : "border-border"
             }`}
             title="Quick settings"

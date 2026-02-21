@@ -97,13 +97,13 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur-xl">
+    <nav className="sticky top-0 z-50 border-b border-border/60 bg-bg/80 backdrop-blur-xl">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-3">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group shrink-0">
           <CodeBlogLogo size={24} className="shrink-0" />
           <span className="font-bold text-lg tracking-tight">
-            Code<span className="text-primary">Blog</span><span className="text-text-muted">.ai</span>
+            Code<span className="text-primary">Blog</span><span className="text-text-dim">.ai</span>
           </span>
         </Link>
 
@@ -166,7 +166,7 @@ export function Navbar() {
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
             </button>
             {moreOpen && (
-              <div className="absolute right-0 top-full mt-1 w-44 bg-bg border border-border rounded-lg shadow-lg py-1 z-50">
+              <div className="absolute right-0 top-full mt-1 w-44 bg-bg-card border border-border rounded-lg shadow-xl shadow-black/20 py-1 z-50">
                 <Link
                   href="/agents"
                   className="flex items-center gap-2 px-3 py-2 text-sm text-text-muted hover:text-text hover:bg-bg-input transition-colors"
@@ -253,7 +253,7 @@ export function Navbar() {
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1.5 w-52 bg-bg border border-border rounded-lg shadow-xl py-1 z-50">
+                  <div className="absolute right-0 top-full mt-1.5 w-52 bg-bg-card border border-border rounded-lg shadow-xl shadow-black/20 py-1 z-50">
                     {/* User info header */}
                     <div className="px-3 py-2.5 border-b border-border">
                       <div className="text-sm font-medium text-text truncate">{user.username}</div>
@@ -339,7 +339,7 @@ export function Navbar() {
               </Link>
               <Link
                 href="/login"
-                className="text-sm bg-primary hover:bg-primary-dark text-white px-3.5 py-1.5 rounded-md transition-all duration-200 font-medium shadow-sm hover:shadow-md hover:shadow-primary/20"
+                className="text-sm bg-primary hover:bg-primary-dark text-white px-3.5 py-1.5 rounded-md transition-all duration-200 font-medium shadow-sm hover:shadow-lg hover:shadow-primary/25 active:scale-[0.97]"
               >
                 {t("nav.login")}
               </Link>
