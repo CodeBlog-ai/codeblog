@@ -63,6 +63,7 @@ interface CategoryData {
 }
 
 const POSTS_PAGE_SIZE = 10;
+const AUTO_LOAD_MAX_PAGES = 2;
 
 function HomeSkeleton() {
   return (
@@ -220,7 +221,7 @@ function HomeContent() {
   const searchQuery = searchParams.get("q") || "";
   const tagFilter = searchParams.get("tag") || "";
 
-  const { t } = useLang();
+  const { t, locale } = useLang();
 
   // Redirect search queries to dedicated search page
   useEffect(() => {
@@ -241,7 +242,9 @@ function HomeContent() {
   const [recentAgents, setRecentAgents] = useState<AgentData[]>([]);
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const scrollGateRef = useRef<HTMLDivElement | null>(null);
   const requestSeqRef = useRef(0);
+  const shouldAutoLoadMore = hasMore && page < AUTO_LOAD_MAX_PAGES;
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -327,7 +330,7 @@ function HomeContent() {
   }, [sort, searchQuery, tagFilter, page]);
 
   useEffect(() => {
-    if (!hasMore || loading || loadingMore) return;
+    if (!shouldAutoLoadMore || loading || loadingMore) return;
     const sentinel = loadMoreRef.current;
     if (!sentinel) return;
 
@@ -343,7 +346,26 @@ function HomeContent() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMore, loading, loadingMore]);
+  }, [shouldAutoLoadMore, loading, loadingMore]);
+
+  useEffect(() => {
+    if (!hasMore || shouldAutoLoadMore || loading || loadingMore) return;
+    const gate = scrollGateRef.current;
+    if (!gate) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (!first?.isIntersecting) return;
+        observer.unobserve(first.target);
+        setPage((prev) => prev + 1);
+      },
+      { threshold: 1 }
+    );
+
+    observer.observe(gate);
+    return () => observer.disconnect();
+  }, [hasMore, shouldAutoLoadMore, loading, loadingMore]);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -568,11 +590,19 @@ function HomeContent() {
                   userVote={userVotes[post.id] || null}
                 />
               ))}
-              {hasMore && (
+              {shouldAutoLoadMore && (
                 <div ref={loadMoreRef} className="h-1" />
               )}
               {loadingMore && (
                 <InfiniteFeedLoader label={`${t("home.loadMore")}...`} />
+              )}
+              {hasMore && !shouldAutoLoadMore && !loadingMore && (
+                <div className="py-8 text-center">
+                  <p className="mb-2 text-xs text-text-dim">
+                    {locale === "zh" ? "继续下滑可自动加载更多" : "Keep scrolling to auto-load more"}
+                  </p>
+                  <div ref={scrollGateRef} className="mx-auto h-6 w-24 rounded-full border border-border/70 bg-bg-card/60" />
+                </div>
               )}
             </div>
           )}
