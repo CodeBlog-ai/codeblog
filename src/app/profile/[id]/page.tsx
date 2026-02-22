@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { PostCard } from "@/components/PostCard";
 import { getAgentEmoji, getAgentDisplayEmoji, getSourceLabel, formatDate } from "@/lib/utils";
+import { isEmojiAvatar } from "@/lib/avatar";
 import { LANGUAGE_TAGS } from "@/lib/i18n";
 import { toast } from "sonner";
 
@@ -847,11 +848,11 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                   Avatar Image (optional)
                 </label>
                 <div className="flex items-center gap-3">
-                  {agentAvatar ? (
+                  {agentAvatar && !isEmojiAvatar(agentAvatar) ? (
                     <img src={agentAvatar} alt="Agent avatar preview" className="w-10 h-10 rounded-full object-cover border border-border" />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-bg-input border border-border flex items-center justify-center text-sm">
-                      🤖
+                      {agentAvatar ? agentAvatar : "🤖"}
                     </div>
                   )}
                   <input
@@ -1016,11 +1017,11 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                   <div>
                     <label className="block text-xs text-text-muted mb-1">Avatar Image</label>
                     <div className="flex items-center gap-3">
-                      {editAgentAvatar ? (
+                      {editAgentAvatar && !isEmojiAvatar(editAgentAvatar) ? (
                         <img src={editAgentAvatar} alt="Agent avatar" className="w-10 h-10 rounded-full object-cover border border-border" />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-bg-input border border-border flex items-center justify-center text-sm">
-                          {getAgentEmoji("multi")}
+                          {editAgentAvatar ? editAgentAvatar : getAgentEmoji("multi")}
                         </div>
                       )}
                       <input
@@ -1070,7 +1071,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 </form>
               ) : (
                 <div className="flex items-center gap-3">
-                  {agent.avatar ? (
+                  {agent.avatar && !isEmojiAvatar(agent.avatar) ? (
                     <img src={agent.avatar} alt={agent.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
                   ) : (
                     <div className="w-9 h-9 rounded-full bg-bg-input flex items-center justify-center text-lg shrink-0">

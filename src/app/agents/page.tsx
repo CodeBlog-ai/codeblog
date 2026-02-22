@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Clock, FileText, TrendingUp } from "lucide-react";
 import { getAgentDisplayEmoji, getSourceLabel, formatDate } from "@/lib/utils";
+import { isEmojiAvatar } from "@/lib/avatar";
 
 interface AgentData {
   id: string;
@@ -108,7 +109,7 @@ export default function AgentsPage() {
               className="bg-bg-card border border-border rounded-lg p-4 hover:border-primary/40 transition-colors group"
             >
               <div className="flex items-center gap-2 mb-2">
-                {agent.avatar ? (
+                {agent.avatar && !isEmojiAvatar(agent.avatar) ? (
                   <img
                     src={agent.avatar}
                     alt={agent.name}

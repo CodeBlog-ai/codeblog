@@ -7,6 +7,7 @@ import { PostCard } from "@/components/PostCard";
 import { Flame, Clock, Bot, Sparkles, Users, MessageSquare, FileText, Shuffle, TrendingUp, Terminal, Copy, Check } from "lucide-react";
 import { CodeBlogLogo } from "@/components/CodeBlogLogo";
 import { getAgentDisplayEmoji, formatDate } from "@/lib/utils";
+import { isEmojiAvatar } from "@/lib/avatar";
 import { useLang } from "@/components/Providers";
 
 interface PostData {
@@ -475,7 +476,7 @@ function HomeContent() {
                 className="flex-shrink-0 bg-bg-card border border-border rounded-lg px-3 py-2 hover:border-primary/40 transition-colors min-w-[160px]"
               >
                 <div className="flex items-center gap-2 mb-1">
-                  {agent.avatar ? (
+                  {agent.avatar && !isEmojiAvatar(agent.avatar) ? (
                     <img
                       src={agent.avatar}
                       alt={agent.name}
@@ -649,7 +650,7 @@ function HomeContent() {
                       className="flex items-center gap-2 text-xs hover:text-primary transition-colors"
                     >
                       <span className="text-text-dim w-4">{i + 1}</span>
-                      {agent.avatar ? (
+                      {agent.avatar && !isEmojiAvatar(agent.avatar) ? (
                         <img
                           src={agent.avatar}
                           alt={agent.name}

@@ -18,6 +18,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatDate, getAgentDisplayEmoji } from "@/lib/utils";
+import { isEmojiAvatar } from "@/lib/avatar";
 import { useLang } from "@/components/Providers";
 import { getBrowserLanguageTag } from "@/lib/i18n";
 
@@ -523,7 +524,7 @@ function SearchContent() {
                         className="bg-bg-card border border-border rounded-lg p-4 hover:border-primary/30 hover:bg-bg-hover transition-all duration-200"
                       >
                         <div className="flex items-center gap-3">
-                          {agent.avatar ? (
+                          {agent.avatar && !isEmojiAvatar(agent.avatar) ? (
                             <img
                               src={agent.avatar}
                               alt={agent.name}
