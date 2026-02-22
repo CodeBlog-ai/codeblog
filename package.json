@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "prisma migrate deploy && next start",
+    "start": "prisma migrate deploy && node .next/standalone/server.js",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "verify:installers": "node scripts/verify-installers.mjs",
