@@ -1,0 +1,37 @@
+日期,阶段,任务ID,手册章节,仓库,文件,验收点,结果,缺陷ID,根因,修复,回归,备注
+2026-03-02,Init,T0,全局,codeblog,.claude/agent_daily_acceptance.csv,建立验收台账,PASS,,,,,
+2026-03-02,A,T1,9.1+3.3,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,review接口支持Bearer并保持原响应结构,PASS,,,,,
+2026-03-02,A,T2,测试要求,codeblog,node_modules + package-lock.json,补齐缺失依赖后typecheck/build通过,PASS,,,,,
+2026-03-02,回归,R1,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,后端Bearer审核接口改造后再次typecheck与build通过,PASS,,,,npm run typecheck && npm run build均通过,产物可用于mac端审核调用
+2026-03-02,回归,R2,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,清理无关lock/buildinfo改动后再次typecheck/build通过,PASS,,,,npm run typecheck && npm run build均通过,后端提交差异仅保留review路由和验收CSV
+2026-03-02,回归,R3,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,清理构建噪音文件后再次typecheck通过,PASS,,,,npm run typecheck通过,后端差异仍仅review路由+CSV
+2026-03-02,审计,A1,阶段A手册细则,codeblog,.claude/agent_daily_manual_audit.md,后端Bearer改造与响应语义一致性审计文档化,PASS,,,,typecheck/build回归通过,后端审计基线已固化
+2026-03-02,回归,R4,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,第五轮联动回归后后端再次typecheck与build通过,PASS,,,,npm run typecheck && npm run build均通过,review Bearer链路持续稳定
+2026-03-02,回归,R5,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,第六轮联动回归后后端再次typecheck与build通过,PASS,,,,npm run typecheck && npm run build均通过,review Bearer链路持续稳定
+2026-03-02,审计,A2,阶段A手册细则,codeblog,.claude/agent_daily_manual_audit.md,第六轮联动后复核Bearer链路和回归结论保持一致,PASS,,,,typecheck/build回归通过,后端审计结论无变化
+2026-03-02,缺陷跟踪,D1,9.1+3.3,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,线上Bearer审核接口仍401需部署本次改造,OPEN,BUG-007,本地代码已支持Bearer但线上服务仍在旧版本,本地启动standalone服务验证POST/PATCH均返回404且非401后续需上线部署,本地curl通过生产curl返回401,属于发布状态差异非代码回归
+2026-03-02,回归,R6,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,第七轮联动后后端再次typecheck与build通过,PASS,,,,npm run typecheck && npm run build均通过,无新增后端代码改动仅持续回归
+2026-03-02,联调,T24,3.3+9.1,codeblog,src/app/api/v1/notifications/[id]/review/route.ts;src/app/api/v1/notifications/route.ts,本地standalone使用真实Bearer完成notifications读取与review reject+undo闭环,PASS,,,,POST/PATCH均200且persona_delta_applied为number,验证了客户端审核链路后端依赖
+2026-03-02,回归,R7,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,UI恢复联动后再次执行后端typecheck+build确认Bearer改造未回归,PASS,,,,npm run typecheck && npm run build均通过,后端review链路稳定
+2026-03-02,回归,R8,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,第九轮联动后后端再次typecheck+build通过确认Bearer评审路由稳定,PASS,,,,npm run typecheck && npm run build均通过,后端本轮无新代码改动仅回归验证
+2026-03-02,回归,R9,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,客户端通知审核交互接入后再次执行后端typecheck与build验证兼容性,PASS,,,,npm run typecheck && npm run build均通过,本轮后端无新代码改动仅持续回归验证
+2026-03-02,回归,R10,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,客户端本轮Daily/Journal交互与预热优化后后端再次执行typecheck与build确认联动基线稳定,PASS,,,,npm run typecheck && npm run build均通过,本轮后端无新增代码改动仅回归验证
+2026-03-02,回归,R11,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,客户端预热与交互收敛后后端再次执行typecheck+build确认双仓联动稳定,PASS,,,,npm run typecheck && npm run build均通过,后端链路保持稳定可继续前端联调
+2026-03-02,联调,T40,9.1+3.3,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,真实账号Bearer调用线上review reject/undo返回401 Unauthorized(其余v1接口正常),OPEN,BUG-018,线上环境review路由仍按旧认证逻辑运行或Bearer路径未生效导致仅该路由401,保留本地代码并标记需部署后复测;客户端侧已做友好错误提示,真实账号验证:agents/notifications/memory/persona/posts均200仅review失败
+2026-03-02,回归,R12,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,客户端本轮真实账号联调后后端再次typecheck+build确认本地源码无回归,PASS,,,,npm run typecheck && npm run build均通过,等待线上部署后再做真实账号review复测
+2026-03-02,回归,R13,测试与验收,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,真实账号二次联调与缺陷记录后再次执行typecheck+build确认本地源码稳定,PASS,,,,npm run typecheck && npm run build均通过,线上401仍待部署处理
+2026-03-02,细节对齐,T41,5.2.3+9.4,codeblog,src/app/api/v1/agents/[id]/memory/route.ts,GET memory新增memory_profile自然语言摘要字段并保持approved/rejected原结构,PASS,,,,npm run typecheck && npm run build通过,为mac端memory卡片提供非机械文案来源
+2026-03-02,回归,R14,测试与验收,codeblog,src/app/api/v1/agents/[id]/memory/route.ts;src/app/api/v1/notifications/[id]/review/route.ts,新增memory_profile后后端再次typecheck+build通过且review路由无编译回归,PASS,,,,npm run typecheck && npm run build均通过,本地源码可发布
+2026-03-02,联调,T42,9.1+3.3,codeblog,src/app/api/v1/notifications/[id]/review/route.ts,真实账号线上review reject仍401其余v1接口可用,OPEN,BUG-018,线上部署仍旧版本或Bearer路径未生效,保持本地源码并等待线上部署后复测,真实账号脚本复测通过6项失败1项,失败仅review reject/undo
+2026-03-02,联调,T43,5.3+8.5+9.1,codeblog,src/app/api/v1/agents/[id]/activity/route.ts;src/app/api/v1/agents/[id]/memory/route.ts;src/app/api/v1/notifications/[id]/review/route.ts,本地3011使用真实Bearer完成activity memory_v2 notifications review reject加undo烟测,PASS,,,本地Next dev路由全部返回200并结构符合客户端解码,本地冒烟通过,确认后端实现可用
+2026-03-02,缺陷跟踪,T44,9.1,codeblog,src/app/api/v1/agents/[id]/activity/route.ts;src/app/api/v1/agents/[id]/memory/route.ts,线上环境activity路由未生效且memory_v2未返回导致客户端只能回退,OPEN,BUG-021,生产环境尚未部署最新后端commit,保留本地通过结果并等待线上部署后复测,线上真实账号activity返回HTML,memory接口无memory_profile_v2
+2026-03-02,回归,R15,测试与验收,codeblog,src/app/api/v1/agents/[id]/activity/route.ts;src/lib/memory/profile-v2.ts,本轮Journal修复后后端再次typecheck和build通过,PASS,,,,npm run typecheck与npm run build通过,可进入下一轮UI验收
+2026-03-02,回归,R16,测试与验收,codeblog,src/app/api/v1/agents/[id]/activity/route.ts;src/app/api/v1/notifications/route.ts,清理dev生成文件后再次typecheck和build验证通过,PASS,,,,npm run typecheck与npm run build通过,可稳定进入部署前联调
+2026-03-03,联调,T45,PLAN-阶段C至E,codeblog,src/app/api/v1/agents/[id]/activity/route.ts;src/app/api/v1/agents/[id]/memory/route.ts;src/app/api/v1/notifications/[id]/review/route.ts;src/app/api/v1/notifications/route.ts,本地3011使用真实Bearer完成activity和memory和notifications和review reject加undo冒烟,PASS,,,,npm run typecheck与npm run build通过,review reject和undo均返回200且persona_delta_applied为number
+2026-03-03,缺陷跟踪,T46,PLAN-阶段C至E,codeblog,src/app/api/v1/agents/[id]/activity/route.ts;src/app/api/v1/agents/[id]/memory/route.ts,线上codeblog.ai仍缺activity路由与memory_profile_v2返回导致客户端回退占位,OPEN,BUG-021,生产环境未部署本地已通过的最新路由实现,待部署后复测线上activity和memory_v2并回填验收,本地回归通过,curl线上activity返回404 HTML且memory无memory_profile_v2
+2026-03-03,回归,R17,测试与验收,codeblog,src/app/api/v1/agents/[id]/activity/route.ts;src/lib/memory/profile-v2.ts,本轮审查后再次执行typecheck和build确认后端源码稳定,PASS,,,,npm run typecheck与npm run build通过,可继续部署前核对
+2026-03-03,缺陷修复,T47,PLAN-Agent反思AI化,codeblog,src/lib/journal-reflection.ts,修复day正则无捕获组导致日期解析NaN影响4AM边界与节流判断,PASS,BUG-024,DAY_RE缺少捕获组但parseDateParts使用match[1..3],将DAY_RE改为带捕获组并重新typecheck+build回归,npm run typecheck && npm run build通过,保证reflection日期与节流逻辑可靠
+2026-03-03,回归,R18,测试与验收,codeblog,src/lib/journal-reflection.ts;src/app/api/v1/agents/[id]/journal-reflection/route.ts,journal-reflection新增链路回归通过且构建产物包含该路由,PASS,,,,npm run typecheck && npm run build通过,路由已出现在next build route列表
+2026-03-03,联调,T48,PLAN-Agent反思AI化,codeblog,src/app/api/v1/agents/[id]/journal-reflection/route.ts;src/lib/journal-reflection.ts,真实Bearer冒烟journal-reflection返回provider_unavailable且error_hint来自AI上游403验证为真实provider路径,PASS,,,,curl localhost:3011返回200与status=provider_unavailable,error_hint=AI upstream failed with status 403,确认非本地模板伪生成
+2026-03-03,缺陷修复,T49,PLAN-Agent反思AI化,codeblog,prisma/migrations/20260303103000_add_agent_journal_reflection_snapshot/migration.sql,修复本地journal-reflection 500根因并完成迁移部署,PASS,BUG-025,本地数据库缺少AgentJournalReflectionSnapshot表导致Prisma P2021,npx prisma migrate deploy应用新迁移后接口恢复可用,npm run typecheck && npm run build通过,本地500已消除
+2026-03-03,上线审查,T50,双仓接口对齐,codeblog,src/app/api/v1/**/route.ts,核对客户端13条/api/v1调用均存在后端路由并再次typecheck与build通过,PASS,,,,npm run typecheck与npm run build通过,线上若仍404需发布本分支到生产环境

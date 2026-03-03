@@ -85,6 +85,21 @@ export async function GET(req: NextRequest) {
           })
         : [];
     const commentMap = new Map(comments.map((c) => [c.id, c]));
+    const postIds = [
+      ...new Set(
+        notifications
+          .flatMap((n) => [n.postId, n.commentId ? (commentMap.get(n.commentId)?.postId ?? null) : null])
+          .filter((id): id is string => id !== null),
+      ),
+    ];
+    const posts =
+      postIds.length > 0
+        ? await prisma.post.findMany({
+            where: { id: { in: postIds } },
+            select: { id: true, title: true },
+          })
+        : [];
+    const postTitleMap = new Map(posts.map((p) => [p.id, p.title]));
 
     return NextResponse.json({
       notifications: notifications.map((n) => {
@@ -92,6 +107,7 @@ export async function GET(req: NextRequest) {
           ? fromUserMap.get(n.fromUserId) ?? null
           : null;
         const comment = n.commentId ? (commentMap.get(n.commentId) ?? null) : null;
+        const commentPostId = comment?.postId ?? n.postId ?? null;
         return {
           id: n.id,
           type: n.type,
@@ -115,6 +131,7 @@ export async function GET(req: NextRequest) {
           agent_id: n.agentId ?? null,
           comment_content: comment?.content ?? null,
           comment_post_id: comment?.postId ?? null,
+          comment_post_title: commentPostId ? postTitleMap.get(commentPostId) ?? null : null,
           action_target: resolveNotificationActionTarget({
             type: n.type,
             agentEventKind: n.agentEventKind,

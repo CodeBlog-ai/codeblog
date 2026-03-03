@@ -9,9 +9,15 @@ import {
   type MemoryCategory,
   type MemoryPolarity,
 } from "@/lib/memory/learning";
+import { buildMemoryProfileV2 } from "@/lib/memory/profile-v2";
 
 const VALID_POLARITY = new Set<MemoryPolarity>(["approved", "rejected"]);
 const VALID_CATEGORY = new Set<MemoryCategory>(["topic", "tone", "format", "behavior"]);
+
+type MemoryRuleRow = {
+  text: string;
+  weight: number;
+};
 
 async function getAuthUserId(req: NextRequest): Promise<string | null> {
   const token = extractBearerToken(req.headers.get("authorization"));
@@ -24,6 +30,52 @@ async function ensureAgentOwner(agentId: string, userId: string): Promise<{ id: 
     where: { id: agentId, userId },
     select: { id: true, name: true },
   });
+}
+
+function normalizeMemoryText(raw: string): string {
+  return raw
+    .replace(/^\[[^\]]+\]\s*/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function summarizeMemoryRules(rules: MemoryRuleRow[]): string[] {
+  const sorted = [...rules].sort((a, b) => b.weight - a.weight);
+  const output: string[] = [];
+  for (const rule of sorted) {
+    const text = normalizeMemoryText(rule.text);
+    if (!text || output.includes(text)) {
+      continue;
+    }
+    output.push(text);
+  }
+  return output;
+}
+
+function buildMemoryProfile(memory: {
+  approved: MemoryRuleRow[];
+  rejected: MemoryRuleRow[];
+}) {
+  const workingStyle = summarizeMemoryRules(memory.approved).slice(0, 4);
+  const avoidPatterns = summarizeMemoryRules(memory.rejected).slice(0, 3);
+
+  if (workingStyle.length === 0 && avoidPatterns.length === 0) {
+    return null;
+  }
+
+  const summaryParts: string[] = [];
+  if (workingStyle.length > 0) {
+    summaryParts.push(`Learns to favor: ${workingStyle.slice(0, 2).join("; ")}`);
+  }
+  if (avoidPatterns.length > 0) {
+    summaryParts.push(`Learns to avoid: ${avoidPatterns.slice(0, 2).join("; ")}`);
+  }
+
+  return {
+    summary: summaryParts.join(". "),
+    working_style: workingStyle,
+    avoid_patterns: avoidPatterns,
+  };
 }
 
 export async function GET(
@@ -41,9 +93,19 @@ export async function GET(
     return NextResponse.json({ error: "Agent not found" }, { status: 404 });
   }
 
-  const [memory, systemLogs] = await Promise.all([
+  const [memory, systemLogs, recentActivities] = await Promise.all([
     listMemoryRules(agent.id),
     listSystemMemoryLogs(agent.id, 100),
+    prisma.agentActivityEvent.findMany({
+      where: { agentId: agent.id },
+      select: {
+        type: true,
+        payload: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 120,
+    }),
   ]);
 
   return NextResponse.json({
@@ -74,6 +136,13 @@ export async function GET(
       notification_id: log.notificationId,
       created_at: log.createdAt.toISOString(),
     })),
+    memory_profile: buildMemoryProfile(memory),
+    memory_profile_v2: buildMemoryProfileV2({
+      approvedRules: memory.approved,
+      rejectedRules: memory.rejected,
+      systemLogs,
+      activities: recentActivities,
+    }),
   });
 }
 

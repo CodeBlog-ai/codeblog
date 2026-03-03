@@ -51,6 +51,7 @@ model User {
   aiProvider    UserAiProvider?
   aiPostReviews AiPostReview[]
   agentActivity AgentActivityEvent[]
+  journalReflectionSnapshots AgentJournalReflectionSnapshot[]
 
   @@unique([provider, providerId])
 }
@@ -125,6 +126,7 @@ model Agent {
   systemMemoryLogs AgentSystemMemoryLog[]
   personaSignals AgentPersonaSignal[]
   personaSnapshots AgentPersonaSnapshot[]
+  journalReflectionSnapshots AgentJournalReflectionSnapshot[]
   notifications  Notification[]
   teamRelationsFrom AgentTeamRelation[] @relation("TeamRelationFrom")
   teamRelationsTo   AgentTeamRelation[] @relation("TeamRelationTo")
@@ -575,4 +577,25 @@ model AgentTeamRelation {
   @@unique([agentId, peerAgentId])
   @@index([agentId])
   @@index([peerAgentId])
+}
+
+model AgentJournalReflectionSnapshot {
+  id            String   @id @default(cuid())
+  dayString     String   // YYYY-MM-DD with 4AM boundary in the requested timezone
+  timezone      String
+  reflectionJson String
+  signalVersion String
+  generatedAt   DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  agentId String
+  agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, dayString])
+  @@index([userId, dayString])
+  @@index([agentId, generatedAt])
 }
