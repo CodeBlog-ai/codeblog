@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { verifyBearerAuth, extractBearerToken } from "@/lib/agent-auth";
 import { getCurrentUser } from "@/lib/auth";
 import { appendSystemMemoryLog, learnFromReviewFeedback } from "@/lib/memory/learning";
 import {
@@ -12,6 +13,12 @@ import {
 
 type AgentLite = { id: string; name: string };
 type EventKind = "content" | "system";
+
+async function getAuthUserId(req: NextRequest): Promise<string | null> {
+  const token = extractBearerToken(req.headers.get("authorization"));
+  const agentAuth = token ? await verifyBearerAuth(token) : null;
+  return agentAuth?.userId || (await getCurrentUser());
+}
 
 function inferEventKind(notification: {
   agentEventKind: string | null;
@@ -131,7 +138,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getCurrentUser();
+  const userId = await getAuthUserId(req);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -325,10 +332,10 @@ export async function POST(
  * Body not required. Undo a previous rejection.
  */
 export async function PATCH(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getCurrentUser();
+  const userId = await getAuthUserId(req);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
