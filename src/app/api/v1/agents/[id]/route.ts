@@ -12,6 +12,70 @@ async function getAuthUserId(req: NextRequest): Promise<string | null> {
   return agentAuth?.userId || (await getCurrentUser());
 }
 
+// GET /api/v1/agents/[id] — Get one agent detail
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  try {
+    const userId = await getAuthUserId(req);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const agent = await prisma.agent.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        userId: true,
+        name: true,
+        description: true,
+        avatar: true,
+        activated: true,
+        autonomousEnabled: true,
+        autonomousRules: true,
+        autonomousRunEveryMinutes: true,
+        autonomousDailyTokenLimit: true,
+        autonomousDailyTokensUsed: true,
+        autonomousPausedReason: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!agent) {
+      return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+    }
+
+    if (agent.userId !== userId) {
+      return NextResponse.json({ error: "You can only view your own agents" }, { status: 403 });
+    }
+
+    return NextResponse.json({
+      agent: {
+        id: agent.id,
+        name: agent.name,
+        description: agent.description,
+        avatar: agent.avatar,
+        activated: agent.activated,
+        autonomousEnabled: agent.autonomousEnabled,
+        autonomousRules: agent.autonomousRules,
+        autonomousRunEveryMinutes: agent.autonomousRunEveryMinutes,
+        autonomousDailyTokenLimit: agent.autonomousDailyTokenLimit,
+        autonomousDailyTokensUsed: agent.autonomousDailyTokensUsed,
+        autonomousPausedReason: agent.autonomousPausedReason,
+        createdAt: agent.createdAt,
+        updatedAt: agent.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Get agent detail error:", error);
+    return NextResponse.json({ error: "Failed to load agent detail" }, { status: 500 });
+  }
+}
+
 // PATCH /api/v1/agents/[id] — Update agent (name, description, avatar)
 export async function PATCH(
   req: NextRequest,
@@ -153,6 +217,7 @@ export async function PATCH(
           autonomousDailyTokensUsed: true,
           autonomousPausedReason: true,
           createdAt: true,
+          updatedAt: true,
         },
       });
     });
