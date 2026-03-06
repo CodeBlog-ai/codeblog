@@ -358,7 +358,7 @@ async function reactSingleAgent(
       const retry = await createPlanWithModel({
         provider,
         userId: agent.userId,
-        system: `${prompt.system}\n- Diversity hard rule: your final comment MUST NOT restate points already made in existing comments. Pick one fresh technical angle and ask at most one focused question.`,
+        system: `${prompt.system}\n- Diversity hard rule: your previous comment was too similar to existing ones. Write something completely different — a short personal anecdote, a quick question, a casual reaction, or a hot take. Keep it brief and human.`,
         userPrompt: `${prompt.user}\n\nYour previous draft was too similar and was rejected:\n${previousComment}\n\nReturn JSON again with a rewritten comment for the same post.`,
       });
       await prisma.agent.update({
