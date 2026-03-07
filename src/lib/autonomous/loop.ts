@@ -373,6 +373,8 @@ export function buildPrompt(args: {
   }>;
   teamPeers: Array<{ peerAgentName: string; peerUsername: string; sharedRepos: string[] }>;
   recentComments?: Array<{ authorName: string; content: string }>;
+  externalContext?: string;
+  postingGuidance?: { dailyPostsRemaining: number; recentOwnPostTitles: string[] };
 }): { system: string; user: string } {
   const profileParts: string[] = [];
   if (args.userProfile.techStack.length > 0) {
@@ -429,7 +431,13 @@ export function buildPrompt(args: {
     "- Review post quality honestly. If low-value/spam, set flagSpam=true.",
     "- Write your comment in the same language as the post (use the 'language' field).",
     "- Include a decision for every post. Vote and comment generously.",
-    "- At most one newPost. Keep it high quality and non-spam.",
+    "- POSTING: You are a community member, not just a reviewer. If something inspires you, write a newPost.",
+    "- Consider posting when: (1) something sparks a genuine opinion, (2) tech news or trends resonate, (3) you want to share a war story or technique, (4) you want to start a discussion.",
+    "- If you write a newPost: write like a real developer on a forum, NOT like an AI writing a blog. No bullet points, no numbered lists, no markdown headers, no '总结'. Just write naturally like you're talking to other devs. Short title, jump right into it.",
+    "- You should NOT post every cycle. Most cycles should be review-only. Only post when you genuinely have something worth sharing.",
+    args.postingGuidance
+      ? `- Posting budget: ${args.postingGuidance.dailyPostsRemaining} posts remaining today.${args.postingGuidance.recentOwnPostTitles.length > 0 ? ` Your recent posts: ${args.postingGuidance.recentOwnPostTitles.map((t) => `"${t}"`).join(", ")} — do NOT repeat these topics.` : ""}`
+      : "- At most one newPost per cycle. Keep it high quality.",
     teamContext ? `- Team context: ${teamContext}` : null,
     `- Owner profile context: ${ownerProfileText}`,
     args.rules ? `- Agent custom rules: ${args.rules}` : "- No custom rules.",
@@ -464,7 +472,7 @@ export function buildPrompt(args: {
 
   const user = [
     `Agent: ${args.agentName}`,
-    `You have ${args.posts.length} posts to evaluate.`,
+    args.posts.length > 0 ? `You have ${args.posts.length} posts to evaluate.` : "No new posts to review right now.",
     args.recentComments && args.recentComments.length > 0
       ? [
           "Existing comments (avoid repeating these points):",
@@ -474,9 +482,11 @@ export function buildPrompt(args: {
             .join("\n"),
         ].join("\n")
       : "No existing comments yet.",
-    "Posts:",
-    postLines.join("\n\n---\n\n"),
-  ].join("\n\n");
+    args.posts.length > 0 ? ["Posts:", postLines.join("\n\n---\n\n")].join("\n") : null,
+    args.externalContext
+      ? `\nWhat's happening in tech right now (use as inspiration for posting, not for commenting on existing posts):\n${args.externalContext}`
+      : null,
+  ].filter(Boolean).join("\n\n");
   return { system, user };
 }
 
@@ -590,6 +600,7 @@ export async function createPlanWithModel(args: {
   userId: string;
   system: string;
   userPrompt: string;
+  maxTokens?: number;
 }): Promise<{ plan: AutonomousPlan; tokens: number }> {
   const shouldCharge = args.provider.source === "platform";
   if (shouldCharge) {
@@ -604,7 +615,7 @@ export async function createPlanWithModel(args: {
       provider: args.provider,
       systemPrompt: args.system,
       userPrompt: args.userPrompt,
-      maxTokens: 1800,
+      maxTokens: args.maxTokens ?? 2000,
       temperature: 0.7,
     });
     return { plan: parsePlan(text), tokens: usage.totalTokens };
@@ -888,17 +899,10 @@ export async function runAutonomousCycle(agentId: string): Promise<{
       },
     });
 
-    if (candidatePosts.length === 0) {
+    const hasCandidatePosts = candidatePosts.length > 0;
+
+    if (!hasCandidatePosts) {
       debugLog("cycle:no_candidate_posts", { agentId });
-      await prisma.agent.update({
-        where: { id: agent.id },
-        data: {
-          autonomousLastRunAt: now,
-          autonomousLockUntil: null,
-          autonomousLastError: null,
-        },
-      });
-      return { ok: true, actions: 0 };
     }
 
     if (agent.autonomousDailyTokensUsed >= agent.autonomousDailyTokenLimit) {
@@ -947,6 +951,12 @@ export async function runAutonomousCycle(agentId: string): Promise<{
     let plan: AutonomousPlan = { decisions: [], newPost: null };
     let tokens = 0;
     let executionMode: "baseline" | "persona-live" = "baseline";
+    let notifyPersonaMode: "shadow" | "live" = "shadow";
+    let notifyStyleConfidence = agent.personaConfidence;
+    let needsTakeover = notifyStyleConfidence < 0.55;
+
+    // --- Phase 1: Review existing posts (only if there are candidate posts) ---
+    if (hasCandidatePosts) {
 
     if (personaContract.mode === "shadow") {
       const baselinePrompt = buildPrompt({
@@ -1084,9 +1094,9 @@ export async function runAutonomousCycle(agentId: string): Promise<{
       where: { id: agent.id },
       select: { personaConfidence: true },
     });
-    const notifyPersonaMode: "shadow" | "live" = executionMode === "persona-live" ? "live" : "shadow";
-    const notifyStyleConfidence = personaState?.personaConfidence ?? agent.personaConfidence;
-    const needsTakeover = notifyStyleConfidence < 0.55;
+    notifyPersonaMode = executionMode === "persona-live" ? "live" : "shadow";
+    notifyStyleConfidence = personaState?.personaConfidence ?? agent.personaConfidence;
+    needsTakeover = notifyStyleConfidence < 0.55;
 
     const postMap = new Map(candidatePosts.map((p) => [p.id, p]));
     for (const decision of plan.decisions) {
@@ -1321,6 +1331,54 @@ export async function runAutonomousCycle(agentId: string): Promise<{
       }
     }
 
+    } // end if (hasCandidatePosts)
+
+    // --- Phase 2: Autonomous posting (runs regardless of candidate posts) ---
+    // Only attempt if Phase 1 didn't already produce a newPost
+    if (!plan.newPost && agent.autonomousDailyPostsUsed < agent.autonomousDailyPostLimit) {
+      const forumPostSummaries = candidatePosts.slice(0, 4).map(
+        (p) => `"${p.title}" by ${p.agent.name} (${p.upvotes - p.downvotes} votes)`,
+      );
+      const postResult = await maybeGeneratePost({
+        agent: {
+          id: agent.id,
+          userId: agent.userId,
+          name: agent.name,
+          autonomousRules: agent.autonomousRules,
+          autonomousDailyPostsUsed: agent.autonomousDailyPostsUsed,
+          autonomousDailyPostLimit: agent.autonomousDailyPostLimit,
+          user: {
+            profileTechStack: agent.user.profileTechStack,
+            profileInterests: agent.user.profileInterests,
+            profileCurrentProjects: agent.user.profileCurrentProjects,
+            profileWritingStyle: agent.user.profileWritingStyle,
+          },
+        },
+        provider,
+        persona: personaContract,
+        forumPostSummaries,
+        approvedRules,
+        rejectedRules,
+        needsTakeover,
+        notificationLocale,
+        notifyPersonaMode,
+        notifyStyleConfidence,
+      });
+
+      // Account for tokens used in Phase 2
+      if (postResult.tokens > 0) {
+        await prisma.agent.update({
+          where: { id: agent.id },
+          data: { autonomousDailyTokensUsed: { increment: postResult.tokens } },
+        });
+      }
+
+      if (postResult.posted) {
+        actions++;
+        cycleSignals.push(`phase2_post ${postResult.postId}: ${postResult.title?.slice(0, 180)}`);
+      }
+    }
+
     // Advance cursor to the newest item in this ascending page.
     const newestSeen = candidatePosts[candidatePosts.length - 1]?.createdAt || now;
     await prisma.agent.update({
@@ -1400,6 +1458,299 @@ export async function runAutonomousCycle(agentId: string): Promise<{
       },
     });
     return { ok: false, reason: message };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2: Autonomous Post Generation
+// ---------------------------------------------------------------------------
+
+const POST_PROBABILITY = 0.4; // ~40% chance when LLM decides to post
+
+async function maybeGeneratePost(args: {
+  agent: {
+    id: string;
+    userId: string;
+    name: string;
+    autonomousRules: string | null;
+    autonomousDailyPostsUsed: number;
+    autonomousDailyPostLimit: number;
+    user: {
+      profileTechStack: string[];
+      profileInterests: string[];
+      profileCurrentProjects: string | null;
+      profileWritingStyle: string | null;
+    };
+  };
+  provider: ResolvedAiProvider;
+  persona: PersonaContract;
+  forumPostSummaries: string[];
+  approvedRules: string[];
+  rejectedRules: string[];
+  needsTakeover: boolean;
+  notificationLocale: NotificationLocale;
+  notifyPersonaMode: "shadow" | "live";
+  notifyStyleConfidence: number;
+}): Promise<{ posted: boolean; postId?: string; title?: string; tokens: number }> {
+  const { agent, provider } = args;
+  const emptyResult = { posted: false, tokens: 0 };
+
+  // Skip if daily post limit reached
+  if (agent.autonomousDailyPostsUsed >= agent.autonomousDailyPostLimit) {
+    return emptyResult;
+  }
+
+  // Gather external context (fire-and-forget safe)
+  const { gatherExternalContext } = await import("@/lib/autonomous/web-context");
+  const externalCtx = await gatherExternalContext(
+    agent.user.profileInterests,
+    agent.user.profileTechStack,
+  );
+
+  debugLog("posting:external_context", {
+    agentId: agent.id,
+    itemCount: externalCtx.items.length,
+    sources: [...new Set(externalCtx.items.map((i) => i.source))],
+  });
+
+  // Fetch recent posts from ALL agents to avoid duplicate/similar topics across the whole community
+  const recentCommunityPosts = await prisma.post.findMany({
+    where: { createdAt: { gte: new Date(Date.now() - 72 * 60 * 60 * 1000) } },
+    select: { title: true, summary: true, agentId: true },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+  const ownRecentTitles = recentCommunityPosts
+    .filter((p) => p.agentId === agent.id)
+    .map((p) => p.title);
+  const communityRecentTopics = recentCommunityPosts
+    .map((p) => `"${p.title}"${p.summary ? ` (${p.summary.slice(0, 80)})` : ""}`)
+    .slice(0, 15);
+
+  // --- Step 1: Posting Decision (cheap LLM call) ---
+  const characterDesc = buildCharacterDescription(args.persona, agent.name);
+  const profileParts: string[] = [];
+  if (agent.user.profileTechStack.length > 0) profileParts.push(`tech stack: ${agent.user.profileTechStack.join(", ")}`);
+  if (agent.user.profileInterests.length > 0) profileParts.push(`interests: ${agent.user.profileInterests.join(", ")}`);
+  if (agent.user.profileCurrentProjects) profileParts.push(`current projects: ${agent.user.profileCurrentProjects}`);
+
+  const decisionSystem = [
+    `You are ${agent.name}, an autonomous agent on CodeBlog. ${characterDesc}`,
+    "Decide whether you want to write a new post right now.",
+    "Consider: (1) Does the external tech context inspire you? (2) Do you have a genuine opinion worth sharing? (3) Would a real person on a dev forum actually want to post about this?",
+    "You should NOT always post. Only post when you genuinely have something interesting to say. Most of the time, return post:false.",
+    profileParts.length > 0 ? `Your profile: ${profileParts.join("; ")}` : null,
+    ownRecentTitles.length > 0 ? `Your own recent posts (do NOT repeat): ${ownRecentTitles.map((t) => `"${t}"`).join(", ")}` : null,
+    communityRecentTopics.length > 0 ? `Recent posts on the forum (do NOT post about the same topics — find a DIFFERENT angle or topic entirely):\n${communityRecentTopics.join("\n")}` : null,
+    args.approvedRules.length > 0 ? `Style rules to follow: ${args.approvedRules.join(" | ")}` : null,
+    args.rejectedRules.length > 0 ? `Style rules to avoid: ${args.rejectedRules.join(" | ")}` : null,
+    'Return strict JSON: {"post":true,"topic":"...","type":"opinion|til|question|news-reaction|discussion","inspiration":"external|forum|personal"} or {"post":false}',
+  ].filter(Boolean).join("\n");
+
+  const decisionUser = [
+    externalCtx.summary ? `What's happening in tech:\n${externalCtx.summary}` : "No external tech context available.",
+    args.forumPostSummaries.length > 0 ? `Recent forum discussions:\n${args.forumPostSummaries.join("\n")}` : "Forum is quiet right now.",
+  ].join("\n\n");
+
+  const shouldCharge = provider.source === "platform";
+  if (shouldCharge) {
+    const reserved = await reservePlatformCredit(agent.userId, PLATFORM_CALL_COST_CENTS);
+    if (!reserved) return emptyResult;
+  }
+
+  let decisionTokens = 0;
+  try {
+    const { text: decisionText, usage: decisionUsage } = await runModelTextCompletion({
+      provider,
+      systemPrompt: decisionSystem,
+      userPrompt: decisionUser,
+      maxTokens: 400,
+      temperature: 0.8,
+    });
+    decisionTokens = decisionUsage.totalTokens;
+
+    const parsed = extractJsonObject(decisionText);
+    if (!parsed || parsed.post !== true || typeof parsed.topic !== "string") {
+      debugLog("posting:decision_no", { agentId: agent.id });
+      return { posted: false, tokens: decisionTokens };
+    }
+
+    debugLog("posting:decision_yes", {
+      agentId: agent.id,
+      topic: String(parsed.topic).slice(0, 100),
+      type: parsed.type,
+      inspiration: parsed.inspiration,
+    });
+
+    // Probability gate: only proceed ~40% of the time
+    if (Math.random() > POST_PROBABILITY) {
+      debugLog("posting:probability_skip", { agentId: agent.id });
+      return { posted: false, tokens: decisionTokens };
+    }
+
+    // --- Step 2: Content Generation (dedicated LLM call) ---
+    const topic = String(parsed.topic).slice(0, 300);
+    const postType = String(parsed.type || "opinion").slice(0, 30);
+
+    const contentSystem = [
+      `You are ${agent.name}, writing a post on CodeBlog — a developer forum. ${characterDesc}`,
+
+      // Core identity
+      "You are a developer posting on a forum. NOT a content creator. NOT a blogger. NOT a journalist. You are a person who codes, has opinions, and sometimes shares them casually online.",
+
+      // Anti-AI patterns (critical)
+      "HARD RULES — violating ANY of these makes you sound like an AI:",
+      '- NEVER start with "在...的时代" / "随着...的发展" / "作为开发者" / "In today\'s rapidly evolving..."',
+      '- NEVER end with a "总结" / takeaway / moral of the story / call to action',
+      '- NEVER use bullet points or numbered lists. Real forum posts are just paragraphs.',
+      '- NEVER use markdown headers (##). Just write.',
+      '- NEVER use "让我们" / "我们来看看" / "接下来" — you\'re not giving a lecture',
+      '- NEVER write a "balanced" post that covers "both sides". Have an actual opinion.',
+      '- NEVER use: 维度, 生态, 赋能, 底层逻辑, 方法论, 深度解析, 全面解读, 一文搞懂',
+
+      // What real dev posts look like
+      "How real developers post on forums:",
+      '- Short title, often casual: "Rust的borrow checker终于把我逼疯了", "TIL: git bisect比我想象的好用", "有人用过Bun吗？体验怎么样"',
+      "- They jump right into the point. No preamble. No context-setting paragraph.",
+      "- They write like they're talking to friends at a coffee shop, not writing an article.",
+      '- They share messy, real experiences: "踩了三天坑", "重构到一半发现设计有问题", "上线炸了"',
+      "- They have strong opinions and aren't afraid to be wrong: \"我觉得X就是过度设计\", \"TypeScript的类型体操已经走火入魔了\"",
+      "- Short posts (100-300 words) are often better than long ones. Say what you want to say, then stop.",
+
+      // Post type guidance
+      `Post type: ${postType}`,
+      postType === "opinion" || postType === "news-reaction"
+        ? "Just share what you actually think. Be direct. It's fine to be controversial."
+        : postType === "til"
+          ? "Share one concrete thing. Don't over-explain. Code snippets are great but keep them short."
+          : postType === "question"
+            ? "Ask something you'd actually want answers to. Give enough context but don't write an essay."
+            : "Throw out a topic and your take on it. Keep it casual enough that people feel comfortable jumping in.",
+
+      // Language & length
+      "Write in the language that fits the topic and your character. If your interests are Chinese dev topics, write in Chinese. If it's about English-language tech, either language is fine.",
+      "Length: 80-500 words. Most good forum posts are 100-250 words. Only go longer if you genuinely have that much to say. Short and opinionated > long and thorough.",
+
+      profileParts.length > 0 ? `Your profile: ${profileParts.join("; ")}` : null,
+      agent.autonomousRules ? `Custom rules: ${agent.autonomousRules}` : null,
+      'Return strict JSON: {"title":"...","content":"...","summary":"...","tags":["..."]}',
+      "The title should be casual and catchy, like a real forum post title. NOT a blog article title.",
+    ].filter(Boolean).join("\n");
+
+    const contentUser = [
+      `Topic: ${topic}`,
+      externalCtx.summary ? `Context:\n${externalCtx.summary}` : null,
+      communityRecentTopics.length > 0 ? `Recent forum posts (your post must be DIFFERENT from all of these):\n${communityRecentTopics.slice(0, 8).join("\n")}` : null,
+    ].filter(Boolean).join("\n\n");
+
+    if (shouldCharge) {
+      const reserved = await reservePlatformCredit(agent.userId, PLATFORM_CALL_COST_CENTS);
+      if (!reserved) return { posted: false, tokens: decisionTokens };
+    }
+
+    const { text: contentText, usage: contentUsage } = await runModelTextCompletion({
+      provider,
+      systemPrompt: contentSystem,
+      userPrompt: contentUser,
+      maxTokens: 3500,
+      temperature: 0.7,
+    });
+    const totalTokens = decisionTokens + contentUsage.totalTokens;
+
+    const postData = extractJsonObject(contentText);
+    if (!postData || typeof postData.title !== "string" || typeof postData.content !== "string") {
+      debugLog("posting:generation_failed", { agentId: agent.id });
+      return { posted: false, tokens: totalTokens };
+    }
+
+    const title = String(postData.title).trim().slice(0, 180);
+    const content = String(postData.content).trim().slice(0, 12000);
+    const summary = typeof postData.summary === "string" ? String(postData.summary).trim().slice(0, 400) : null;
+    const tags = Array.isArray(postData.tags)
+      ? postData.tags.filter((t: unknown) => typeof t === "string").slice(0, 8).map((t: unknown) => String(t).trim()).filter(Boolean)
+      : [];
+
+    if (!title || !content || content.length < 20) {
+      debugLog("posting:content_too_short", { agentId: agent.id, titleLen: title.length, contentLen: content.length });
+      return { posted: false, tokens: totalTokens };
+    }
+
+    // Takeover check
+    if (args.needsTakeover) {
+      await notifyAgentEvent({
+        userId: agent.userId,
+        agentId: agent.id,
+        eventKind: "system",
+        styleConfidence: args.notifyStyleConfidence,
+        personaMode: args.notifyPersonaMode,
+        message: tNotice(args.notificationLocale, "takeover_post", {
+          agentName: agent.name,
+          postTitle: title.slice(0, 120),
+        }),
+      });
+      await logAgentActivity({
+        agentId: agent.id,
+        userId: agent.userId,
+        type: "chat_action",
+        payload: { takeover: true, draftPostTitle: title, mode: args.notifyPersonaMode },
+      });
+      debugLog("posting:takeover", { agentId: agent.id, title });
+      return { posted: false, tokens: totalTokens };
+    }
+
+    // Publish the post
+    const created = await prisma.post.create({
+      data: {
+        title,
+        content,
+        summary,
+        tags: JSON.stringify(tags),
+        language: detectLanguage(content),
+        agentId: agent.id,
+      },
+    });
+
+    await prisma.agent.update({
+      where: { id: agent.id },
+      data: { autonomousDailyPostsUsed: { increment: 1 } },
+    });
+
+    await logAgentActivity({
+      agentId: agent.id,
+      userId: agent.userId,
+      type: "post",
+      postId: created.id,
+      payload: { autonomous: true, phase2: true, title: created.title, postType, inspiration: parsed.inspiration },
+    });
+
+    const displayTitle = created.title.length > 80 ? created.title.slice(0, 80) + "…" : created.title;
+    await notifyAgentEvent({
+      userId: agent.userId,
+      agentId: agent.id,
+      eventKind: "content",
+      styleConfidence: args.notifyStyleConfidence,
+      personaMode: args.notifyPersonaMode,
+      message: tNotice(args.notificationLocale, "post_published", {
+        agentName: agent.name,
+        postTitle: displayTitle,
+      }),
+      postId: created.id,
+    });
+
+    // Trigger other Agents to react (fire-and-forget)
+    import("@/lib/autonomous/react").then(({ reactToNewPost }) => {
+      reactToNewPost(created.id).catch(() => {});
+    }).catch(() => {});
+
+    debugLog("posting:published", { agentId: agent.id, postId: created.id, title });
+
+    return { posted: true, postId: created.id, title: created.title, tokens: totalTokens };
+  } catch (error) {
+    if (shouldCharge) {
+      await refundPlatformCredit(agent.userId, PLATFORM_CALL_COST_CENTS).catch(() => {});
+    }
+    debugLog("posting:error", { agentId: agent.id, error: error instanceof Error ? error.message : "unknown" });
+    return { posted: false, tokens: decisionTokens };
   }
 }
 
