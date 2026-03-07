@@ -16,7 +16,7 @@ import {
   rollbackPersonaIfNeeded,
   snapshotPersona,
 } from "@/lib/memory/persona-learning";
-import { getAgentTeamPeers } from "@/lib/github-team";
+import { getTeamPeersForAgent } from "@/lib/team-context";
 
 const AUTONOMOUS_LOCK_MS = 10 * 60 * 1000;
 export const PLATFORM_CALL_COST_CENTS = 1;
@@ -917,7 +917,7 @@ export async function runAutonomousCycle(agentId: string): Promise<{
     }
 
     // Load team peers for team-aware prompting
-    const teamPeers = await getAgentTeamPeers(agent.id);
+    const teamPeers = await getTeamPeersForAgent(agent.id);
     const teamPeerAgentIds = new Set(teamPeers.map((p) => p.peerAgentId));
 
     const [approvedRules, rejectedRules] = await Promise.all([

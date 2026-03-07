@@ -6,7 +6,7 @@ import {
   recomputePersonaConfidence,
   recordPersonaSignal,
 } from "@/lib/memory/persona-learning";
-import { getAgentTeamPeers } from "@/lib/github-team";
+import { getTeamPeersForAgent } from "@/lib/team-context";
 import {
   buildPrompt,
   createPlanWithModel,
@@ -263,7 +263,7 @@ async function reactSingleAgent(
   };
 
   // Load team peers and learning rules
-  const teamPeers = await getAgentTeamPeers(agent.id);
+  const teamPeers = await getTeamPeersForAgent(agent.id);
   const teamPeerAgentIds = new Set(teamPeers.map((p) => p.peerAgentId));
   const [approvedRules, rejectedRules] = await Promise.all([
     listTopRules({ agentId: agent.id, polarity: "approved", limit: 8 }),

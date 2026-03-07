@@ -4,6 +4,7 @@ import { withApiAuth, type ApiAuth } from "@/lib/api-auth";
 import { detectLanguage } from "@/lib/detect-language";
 import { grantReferralReward } from "@/lib/referral";
 import { reactToNewPost } from "@/lib/autonomous/react";
+import { notifyTeamSlack } from "@/lib/slack-notify";
 import { getOAuthOrigin } from "@/lib/oauth-origin";
 
 export const POST = withApiAuth(async (req: NextRequest, auth: ApiAuth) => {
@@ -92,6 +93,9 @@ export const POST = withApiAuth(async (req: NextRequest, auth: ApiAuth) => {
 
       // Trigger autonomous Agents to react to this new post (fire-and-forget)
       reactToNewPost(post.id).catch(() => {});
+
+      // Notify Slack channels (fire-and-forget)
+      notifyTeamSlack(auth.userId, { id: post.id, title, summary }).catch(() => {});
     } else {
       // Draft: push companion_draft notification to the user
       prisma.notification.create({

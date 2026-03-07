@@ -52,16 +52,23 @@ model User {
   aiPostReviews AiPostReview[]
   agentActivity AgentActivityEvent[]
   journalReflectionSnapshots AgentJournalReflectionSnapshot[]
+  teamMemberships TeamMember[]
+  createdTeams    Team[]           @relation("TeamCreator")
+  teamMessages    TeamMessage[]
 
   @@unique([provider, providerId])
 }
 
 model OAuthAccount {
-  id         String   @id @default(cuid())
-  provider   String
-  providerId String
-  email      String?
-  createdAt  DateTime @default(now())
+  id             String    @id @default(cuid())
+  provider       String
+  providerId     String
+  email          String?
+  accessToken    String?   // stored when API access is needed (Slack, GitHub Org)
+  refreshToken   String?   // Slack rotating refresh tokens
+  tokenScope     String?   // granted OAuth scopes, e.g. "read:org" or "users:read"
+  tokenExpiresAt DateTime? // when the access token expires
+  createdAt      DateTime  @default(now())
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -130,6 +137,7 @@ model Agent {
   notifications  Notification[]
   teamRelationsFrom AgentTeamRelation[] @relation("TeamRelationFrom")
   teamRelationsTo   AgentTeamRelation[] @relation("TeamRelationTo")
+  teamMessages      TeamMessage[]
 
   @@index([userId])
   @@index([apiKey])
@@ -598,4 +606,108 @@ model AgentJournalReflectionSnapshot {
   @@unique([agentId, dayString])
   @@index([userId, dayString])
   @@index([agentId, generatedAt])
+}
+
+// ─── Team Models ─────────────────────────────────────────
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  avatar      String?
+  source      String   @default("manual") // "github_org" | "slack_workspace" | "manual"
+  sourceId    String?  // GitHub org ID or Slack workspace ID (for dedup)
+  sourceMeta  String?  // JSON: { orgLogin, orgAvatarUrl } or { workspaceName, workspaceDomain }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Slack integration
+  slackWebhookUrl     String? // Incoming Webhook URL
+  slackBotToken       String? // Bot OAuth access token
+  slackBotChannelId   String? // Target channel ID for bot notifications
+  slackBotChannelName String? // Target channel name (display only)
+
+  createdById String
+  createdBy   User     @relation("TeamCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  members  TeamMember[]
+  channels TeamChannel[]
+  invites  TeamInvite[]
+
+  @@unique([source, sourceId])
+  @@index([createdById])
+  @@index([slug])
+}
+
+model TeamMember {
+  id       String   @id @default(cuid())
+  role     String   @default("member") // "owner" | "admin" | "member"
+  joinedAt DateTime @default(now())
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+model TeamChannel {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  messages TeamMessage[]
+
+  @@unique([teamId, name])
+  @@index([teamId])
+}
+
+model TeamMessage {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channelId String
+  channel   TeamChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  agentId String?
+  agent   Agent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  parentId String?
+  parent   TeamMessage?  @relation("TeamMessageReplies", fields: [parentId], references: [id])
+  replies  TeamMessage[] @relation("TeamMessageReplies")
+
+  @@index([channelId, createdAt])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model TeamInvite {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  maxUses   Int       @default(0) // 0 = unlimited
+  uses      Int       @default(0)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  teamId      String
+  team        Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdById String
+
+  @@index([teamId])
+  @@index([code])
 }

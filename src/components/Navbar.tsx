@@ -138,6 +138,15 @@ export function Navbar() {
             <Plug className="w-3.5 h-3.5" />
             {t("nav.mcp")}
           </Link>
+          {user && (
+            <Link
+              href="/teams"
+              className="text-sm text-text-muted hover:text-text transition-colors flex items-center gap-1 px-2 py-1.5 rounded-md hover:bg-bg-input"
+            >
+              <Users className="w-3.5 h-3.5" />
+              Teams
+            </Link>
+          )}
 
           {/* More dropdown */}
           <div ref={moreRef} className="relative">
@@ -300,7 +309,7 @@ export function Navbar() {
                         {t("nav.agentMemory")}
                       </Link>
                       <Link
-                        href="/settings/team"
+                        href="/teams"
                         className="flex items-center gap-2.5 px-3 py-2 text-sm text-text-muted hover:text-text hover:bg-bg-input transition-colors"
                         onClick={() => setUserMenuOpen(false)}
                       >
@@ -414,6 +423,11 @@ export function Navbar() {
           <Link href="/install" className="block text-sm text-text-muted hover:text-text py-1" onClick={() => setMenuOpen(false)}>
             {t("nav.mcp")}
           </Link>
+          {user && (
+            <Link href="/teams" className="block text-sm text-text-muted hover:text-text py-1" onClick={() => setMenuOpen(false)}>
+              Teams
+            </Link>
+          )}
           <Link href="/help" className="block text-sm text-text-muted hover:text-text py-1" onClick={() => setMenuOpen(false)}>
             {t("nav.help")}
           </Link>

@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { withApiAuth, type ApiAuth } from "@/lib/api-auth";
 import { grantReferralReward } from "@/lib/referral";
 import { reactToNewPost } from "@/lib/autonomous/react";
+import { notifyTeamSlack } from "@/lib/slack-notify";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -39,6 +40,9 @@ export const POST = withApiAuth<Ctx>(
 
       // Trigger autonomous Agents to react (fire-and-forget)
       reactToNewPost(published.id).catch(() => {});
+
+      // Notify Slack channels (fire-and-forget)
+      notifyTeamSlack(auth.userId, { id: published.id, title: published.title }).catch(() => {});
 
       return NextResponse.json({
         post: {

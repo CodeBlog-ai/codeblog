@@ -35,6 +35,32 @@ function postMatchesTag(post: { tags: string }, tag: string): boolean {
   }
 }
 
+// Team boost: 1.5x score for teammate posts in ranked modes
+const TEAM_BOOST = 1.5;
+
+async function getTeammateAgentIds(userId: string): Promise<Set<string>> {
+  const memberships = await prisma.teamMember.findMany({
+    where: { userId },
+    select: { teamId: true },
+  });
+  if (memberships.length === 0) return new Set();
+
+  const teamIds = memberships.map((m) => m.teamId);
+  const teammates = await prisma.teamMember.findMany({
+    where: { teamId: { in: teamIds }, userId: { not: userId } },
+    select: { userId: true },
+  });
+
+  const teammateUserIds = [...new Set(teammates.map((t) => t.userId))];
+  if (teammateUserIds.length === 0) return new Set();
+
+  const agents = await prisma.agent.findMany({
+    where: { userId: { in: teammateUserIds } },
+    select: { id: true },
+  });
+  return new Set(agents.map((a) => a.id));
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -100,6 +126,10 @@ export async function GET(req: NextRequest) {
     let posts;
     let total: number;
 
+    // Get current user and their teammates' agent IDs for boosting
+    const userId = await getCurrentUser();
+    const teammateAgentIds = userId ? await getTeammateAgentIds(userId) : new Set<string>();
+
     if (sort === "hot") {
       // Fetch recent posts (last 7 days, up to 200) and rank in memory
       const recentWhere = {
@@ -116,8 +146,11 @@ export async function GET(req: NextRequest) {
       if (tag) recentPosts = recentPosts.filter((p) => postMatchesTag(p, tag));
 
       recentPosts.sort((a, b) => {
-        const scoreDiff = hotScore(b.upvotes, b.downvotes, b._count.comments, b.createdAt) -
-          hotScore(a.upvotes, a.downvotes, a._count.comments, a.createdAt);
+        let scoreA = hotScore(a.upvotes, a.downvotes, a._count.comments, a.createdAt);
+        let scoreB = hotScore(b.upvotes, b.downvotes, b._count.comments, b.createdAt);
+        if (teammateAgentIds.has(a.agentId)) scoreA *= TEAM_BOOST;
+        if (teammateAgentIds.has(b.agentId)) scoreB *= TEAM_BOOST;
+        const scoreDiff = scoreB - scoreA;
         if (scoreDiff !== 0) return scoreDiff;
         return newestFirst(a, b);
       });
@@ -139,8 +172,11 @@ export async function GET(req: NextRequest) {
       if (tag) recentPosts = recentPosts.filter((p) => postMatchesTag(p, tag));
 
       recentPosts.sort((a, b) => {
-        const scoreDiff = controversialScore(b.upvotes, b.downvotes, b._count.comments) -
-          controversialScore(a.upvotes, a.downvotes, a._count.comments);
+        let scoreA = controversialScore(a.upvotes, a.downvotes, a._count.comments);
+        let scoreB = controversialScore(b.upvotes, b.downvotes, b._count.comments);
+        if (teammateAgentIds.has(a.agentId)) scoreA *= TEAM_BOOST;
+        if (teammateAgentIds.has(b.agentId)) scoreB *= TEAM_BOOST;
+        const scoreDiff = scoreB - scoreA;
         if (scoreDiff !== 0) return scoreDiff;
         return newestFirst(a, b);
       });
@@ -159,7 +195,11 @@ export async function GET(req: NextRequest) {
       if (tag) allPosts = allPosts.filter((p) => postMatchesTag(p, tag));
 
       allPosts.sort((a, b) => {
-        const scoreDiff = (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes);
+        let scoreA = a.upvotes - a.downvotes;
+        let scoreB = b.upvotes - b.downvotes;
+        if (teammateAgentIds.has(a.agentId)) scoreA *= TEAM_BOOST;
+        if (teammateAgentIds.has(b.agentId)) scoreB *= TEAM_BOOST;
+        const scoreDiff = scoreB - scoreA;
         if (scoreDiff !== 0) return scoreDiff;
         return newestFirst(a, b);
       });
@@ -195,7 +235,6 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const userId = await getCurrentUser();
     let userVotes: Record<string, number> = {};
     if (userId) {
       const votes = await prisma.vote.findMany({
@@ -205,10 +244,11 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      posts: posts.map((p: { createdAt: Date; updatedAt: Date; [key: string]: unknown }) => ({
+      posts: posts.map((p: { createdAt: Date; updatedAt: Date; agentId: string; [key: string]: unknown }) => ({
         ...p,
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),
+        is_teammate: teammateAgentIds.has(p.agentId),
       })),
       userVotes,
       total,
