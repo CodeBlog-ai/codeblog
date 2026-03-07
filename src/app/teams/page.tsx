@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, Plus, ArrowLeft, Github, MessageSquare } from "lucide-react";
+import { Users, Plus, ArrowLeft, Github, MessageSquare, LogIn, Loader2 } from "lucide-react";
 import { useLang } from "@/components/Providers";
 import { useAuth } from "@/lib/AuthContext";
 import { formatDate } from "@/lib/utils";
@@ -23,6 +24,7 @@ interface TeamItem {
 }
 
 export default function TeamsPage() {
+  const router = useRouter();
   const { locale } = useLang();
   const isZh = locale === "zh";
   const tr = (zh: string, en: string) => (isZh ? zh : en);
@@ -30,6 +32,11 @@ export default function TeamsPage() {
   const [teams, setTeams] = useState<TeamItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { user: authUser, loading: authLoading } = useAuth();
+
+  // Join by invite code
+  const [inviteCode, setInviteCode] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -45,6 +52,36 @@ export default function TeamsPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [authUser, authLoading]);
+
+  const handleJoinByCode = async () => {
+    const code = inviteCode.trim();
+    if (!code) return;
+    setJoining(true);
+    setJoinError("");
+    try {
+      const res = await fetch("/api/v1/teams/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const msgs: Record<string, string> = {
+          invalid_code: tr("无效的邀请码", "Invalid invite code"),
+          invite_expired: tr("邀请已过期", "Invite has expired"),
+          invite_exhausted: tr("邀请次数已用完", "Invite uses exhausted"),
+          already_member: tr("你已是该团队成员", "You're already a member"),
+        };
+        setJoinError(msgs[data.error] || data.error || tr("加入失败", "Failed to join"));
+        return;
+      }
+      router.push(`/teams/${data.team_slug}`);
+    } catch {
+      setJoinError(tr("网络错误", "Network error"));
+    } finally {
+      setJoining(false);
+    }
+  };
 
   if (!authLoading && !authUser) {
     return (
@@ -105,6 +142,33 @@ export default function TeamsPage() {
         </Link>
       </div>
 
+      {/* Join by invite code */}
+      <div className="mb-6 bg-bg-card border border-border rounded-xl p-4">
+        <h3 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+          <LogIn className="w-4 h-4 text-primary" />
+          {tr("通过邀请码加入团队", "Join a team with invite code")}
+        </h3>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={inviteCode}
+            onChange={(e) => { setInviteCode(e.target.value); setJoinError(""); }}
+            placeholder={tr("输入邀请码，例如 a1b2c3d4", "Enter invite code, e.g. a1b2c3d4")}
+            className="flex-1 text-sm px-3 py-2 rounded-lg border border-border bg-bg-input focus:outline-none focus:border-primary"
+            onKeyDown={(e) => { if (e.key === "Enter") handleJoinByCode(); }}
+          />
+          <button
+            onClick={handleJoinByCode}
+            disabled={joining || !inviteCode.trim()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 whitespace-nowrap"
+          >
+            {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+            {joining ? tr("加入中...", "Joining...") : tr("加入", "Join")}
+          </button>
+        </div>
+        {joinError && <p className="text-xs text-accent-red mt-2">{joinError}</p>}
+      </div>
+
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -122,8 +186,8 @@ export default function TeamsPage() {
           </h3>
           <p className="text-sm text-text-dim mb-4">
             {tr(
-              "创建一个团队，或通过 GitHub / Slack 导入现有团队",
-              "Create a team manually, or import from GitHub / Slack"
+              "创建一个团队，或通过邀请码 / GitHub / Slack 加入现有团队",
+              "Create a team, or join one with an invite code / GitHub / Slack"
             )}
           </p>
           <Link
