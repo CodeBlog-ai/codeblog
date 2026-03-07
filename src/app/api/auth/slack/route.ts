@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOAuthOrigin } from "@/lib/oauth-origin";
 
-// Slack OAuth — user token with users:read, users.read.email, team:read scopes
+// Slack OAuth — user token with users:read, users:read.email scopes
 export async function GET(req: NextRequest) {
   const clientId = process.env.SLACK_CLIENT_ID;
   if (!clientId) {
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
-    user_scope: "users:read,users.read.email,team:read",
+    user_scope: "users:read,users:read.email",
     state,
   });
 
