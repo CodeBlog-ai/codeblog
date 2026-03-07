@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -22,6 +22,14 @@ interface GitHubOrg {
 }
 
 export default function NewTeamPage() {
+  return (
+    <Suspense>
+      <NewTeamPageContent />
+    </Suspense>
+  );
+}
+
+function NewTeamPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { locale } = useLang();
