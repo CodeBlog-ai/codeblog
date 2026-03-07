@@ -19,6 +19,7 @@ import {
   Shield,
   ExternalLink,
   Send,
+  Sparkles,
 } from "lucide-react";
 import { useLang } from "@/components/Providers";
 import { useAuth } from "@/lib/AuthContext";
@@ -94,6 +95,7 @@ export default function TeamOverviewPage() {
   const [selectedChannelId, setSelectedChannelId] = useState("");
   const [channelSaving, setChannelSaving] = useState(false);
   const [providers, setProviders] = useState<{ slack: boolean } | null>(null);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
 
   const loadTeam = useCallback(async () => {
     try {
@@ -301,6 +303,58 @@ export default function TeamOverviewPage() {
         </div>
       </div>
 
+      {/* Welcome banner for new teams (admin only) */}
+      {isAdmin && !welcomeDismissed && team.members.length <= 2 && (
+        <div className="mb-4 bg-primary/5 border border-primary/20 rounded-xl p-5 relative">
+          <button
+            onClick={() => setWelcomeDismissed(true)}
+            className="absolute top-3 right-3 text-text-dim hover:text-text transition-colors text-xs"
+          >
+            {tr("关闭", "Dismiss")}
+          </button>
+          <div className="flex items-start gap-3">
+            <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-semibold mb-2">
+                {tr("欢迎！快速设置你的团队", "Welcome! Set up your team")}
+              </h3>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-xs">
+                  {team.members.length > 1 ? (
+                    <Check className="w-3.5 h-3.5 text-accent-green shrink-0" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full border border-border shrink-0" />
+                  )}
+                  <span className={team.members.length > 1 ? "text-text-dim line-through" : "text-text-muted"}>
+                    {tr("邀请团队成员加入", "Invite team members")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  {team.channels.length > 1 ? (
+                    <Check className="w-3.5 h-3.5 text-accent-green shrink-0" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full border border-border shrink-0" />
+                  )}
+                  <span className={team.channels.length > 1 ? "text-text-dim line-through" : "text-text-muted"}>
+                    {tr("创建更多频道来组织讨论", "Create more channels to organize discussions")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  {team.slack_bot_installed || team.slack_webhook_url ? (
+                    <Check className="w-3.5 h-3.5 text-accent-green shrink-0" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full border border-border shrink-0" />
+                  )}
+                  <span className={team.slack_bot_installed || team.slack_webhook_url ? "text-text-dim line-through" : "text-text-muted"}>
+                    {tr("连接 Slack 获取发帖通知", "Connect Slack for post notifications")}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left column: Channels + Add Member + Slack */}
         <div className="lg:col-span-2 space-y-4">
@@ -311,23 +365,38 @@ export default function TeamOverviewPage() {
               {tr("频道", "Channels")}
             </h2>
 
-            <div className="space-y-2">
-              {team.channels.map((ch) => (
-                <Link
-                  key={ch.id}
-                  href={`/teams/${slug}/${ch.name}`}
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-bg-hover transition-colors group"
-                >
-                  <Hash className="w-4 h-4 text-text-dim" />
-                  <span className="text-sm font-medium group-hover:text-primary transition-colors">
-                    {ch.name}
-                  </span>
-                  {ch.description && (
-                    <span className="text-xs text-text-dim truncate">{ch.description}</span>
+            {team.channels.length === 0 ? (
+              <div className="text-center py-6">
+                <MessageSquare className="w-8 h-8 text-text-dim mx-auto mb-2 opacity-50" />
+                <p className="text-sm text-text-muted mb-1">
+                  {tr("还没有频道", "No channels yet")}
+                </p>
+                <p className="text-[11px] text-text-dim">
+                  {tr(
+                    "频道是团队成员讨论和分享内容的地方。创建一个频道开始交流吧！",
+                    "Channels are where your team discusses and shares content. Create one to get started!"
                   )}
-                </Link>
-              ))}
-            </div>
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {team.channels.map((ch) => (
+                  <Link
+                    key={ch.id}
+                    href={`/teams/${slug}/${ch.name}`}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-bg-hover transition-colors group"
+                  >
+                    <Hash className="w-4 h-4 text-text-dim" />
+                    <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                      {ch.name}
+                    </span>
+                    {ch.description && (
+                      <span className="text-xs text-text-dim truncate">{ch.description}</span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
 
             {isAdmin && (
               <div className="mt-4 flex gap-2">
@@ -414,6 +483,18 @@ export default function TeamOverviewPage() {
                 </p>
 
                 {/* Webhook URL */}
+                {!team.slack_webhook_url && !team.slack_bot_installed && (
+                  <div className="mb-3 p-2.5 bg-bg-hover/50 rounded-lg">
+                    <p className="text-[11px] font-medium text-text-muted mb-1.5">
+                      {tr("快速开始：", "Quick start:")}
+                    </p>
+                    <ol className="text-[11px] text-text-dim space-y-1 list-decimal list-inside">
+                      <li>{tr("打开 Slack → 选择一个频道 → 设置 → 集成 → 添加应用", "Open Slack → Pick a channel → Settings → Integrations → Add app")}</li>
+                      <li>{tr("搜索 \"Incoming Webhooks\" 并添加", "Search \"Incoming Webhooks\" and add it")}</li>
+                      <li>{tr("复制 Webhook URL 粘贴到下方", "Copy the Webhook URL and paste below")}</li>
+                    </ol>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <label className="text-[11px] text-text-dim block">
                     Incoming Webhook URL
@@ -466,6 +547,14 @@ export default function TeamOverviewPage() {
                     <label className="text-[11px] text-text-dim block mb-2">
                       {tr("或使用 Slack Bot（推荐）", "Or use Slack Bot (recommended)")}
                     </label>
+                    {!team.slack_bot_installed && (
+                      <p className="text-[10px] text-text-dim mb-2">
+                        {tr(
+                          "安装 Bot 后可以自动选择推送频道，无需手动复制 URL",
+                          "Install the Bot to auto-select channels — no manual URL copying needed"
+                        )}
+                      </p>
+                    )}
                     {!team.slack_bot_installed ? (
                       <a
                         href={`/api/auth/slack-bot?team=${slug}`}
